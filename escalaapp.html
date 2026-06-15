@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <meta name="theme-color" content="#667eea">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>Minha Escala</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #ffffff;
+        }
+        
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1rem;
+            box-shadow: 0 2px 10px rgba(255, 253, 253, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        
+        .header h1 {
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .user-info {
+            background: rgba(255,255,255,0.2);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+        
+        .btn-sair, .btn-config {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 1px solid white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.3s;
+        }
+        
+        .btn-sair:hover, .btn-config:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+        
+        /* Container principal */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+        
+        /* Cards de empresas */
+        .empresas-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .empresa-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 2px solid transparent;
+        }
+        
+        .empresa-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .empresa-card.selecionada {
+            border-color: #667eea;
+            background: #f8f7ff;
+        }
+        
+        .empresa-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .empresa-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+        
+        .empresa-info {
+            flex: 1;
+        }
+        
+        .empresa-nome {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .empresa-cnpj {
+            font-size: 0.8rem;
+            color: #666;
+        }
+        
+        .empresa-stats {
+            display: flex;
+            justify-content: space-between;
+            padding-top: 0.5rem;
+            border-top: 1px solid #eee;
+        }
+        
+        .stat {
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #667eea;
+        }
+        
+        .stat-label {
+            font-size: 0.7rem;
+            color: #666;
+        }
+        
+        /* Abas */
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid #dee2e6;
+            flex-wrap: wrap;
+        }
+        
+        .tab-btn {
+            padding: 0.75rem 1.5rem;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            color: #666;
+            transition: all 0.3s;
+            border-radius: 8px 8px 0 0;
+        }
+        
+        .tab-btn:hover {
+            background: #f0f0f0;
+        }
+        
+        .tab-btn.active {
+            color: #667eea;
+            border-bottom: 3px solid #667eea;
+            background: #f8f7ff;
+        }
+        
+        /* Conteúdo das abas */
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Cards de eventos */
+        .eventos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 1rem;
+        }
+        
+        .evento-card {
+            background: rgb(255, 255, 255);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(249, 248, 248, 0.1);
+            transition: all 0.3s;
+        }
+        
+        .evento-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+        }
+        
+        .evento-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: rgb(10, 10, 10);
+            padding: 1rem;
+        }
+        
+        .evento-empresa {
+            font-size: 0.75rem;
+            opacity: 0.9;
+            margin-bottom: 0.25rem;
+        }
+        
+        .evento-cliente {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+        
+        .evento-body {
+            padding: 1rem;
+        }
+        
+        .evento-info {
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+            color: #555;
+        }
+        
+        .evento-info .label {
+            font-weight: 600;
+            color: #333;
+            min-width: 70px;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .status-confirmado { background: #d4edda; color: #155724; }
+        .status-pendente { background: #fff3cd; color: #856404; }
+        .status-nao-pago { background: #f8d7da; color: #721c24; }
+        
+        .btn-mapa {
+            display: inline-block;
+            margin-top: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            transition: background 0.3s;
+        }
+        
+        .btn-mapa:hover {
+            background: #0056b3;
+        }
+        
+        /* Filtros */
+        .filtros {
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            align-items: flex-end;
+        }
+        
+        .filtro-group {
+            flex: 1;
+            min-width: 150px;
+        }
+        
+        .filtro-group label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+            color: #555;
+        }
+        
+        .filtro-group select, .filtro-group input {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+        
+        /* Calendário */
+      .calendario-container {
+    background: transparent !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+}
+        
+        .calendario-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+      .calendario-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0.5rem;
+    width: 100%;
+}
+        
+        .calendario-dia {
+            aspect-ratio: 1.4;
+            padding: 20rem;
+            border: 10px solid #e0e0e0;
+            border-radius: 80px;
+            cursor: pointer;
+            transition: all 5.3s;
+            position: relative;
+        }
+        
+        .calendario-dia:hover {
+            background: #f0f0f0;
+            transform: scale(1.02);
+        }
+        
+        .calendario-dia.tem-evento {
+            background: #e8f4fd;
+            border-color: #667eea;
+        }
+        
+        .dia-numero {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+        
+        .dia-eventos {
+            font-size: 0.7rem;
+            color: #666;
+        }
+        
+        .evento-ponto {
+            width: 6px;
+            height: 6px;
+            background: #667eea;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 2px;
+        }
+        
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+        }
+        
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            padding: 1.5rem;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #999;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .eventos-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .empresas-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .filtros {
+                flex-direction: column;
+            }
+            
+            .filtro-group {
+                width: 100%;
+            }
+        }
+        @keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOut {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+.btn-excluir-escala {
+    margin-top: 0.75rem;
+    padding: 0.5rem 1rem;
+    background: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    width: 100%;
+    font-size: 0.85rem;
+    transition: all 0.3s;
+}
+
+.btn-excluir-escala:hover {
+    background: #c82333;
+    transform: translateY(-2px);
+}
+
+.btn-excluir-escala:active {
+    transform: translateY(0);
+}
+
+
+.calendario-dia:hover {
+    transform: scale(1.02);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 10;
+}
+
+/* Tooltip para mostrar mais informações no hover */
+.calendario-dia[data-tooltip]:hover:after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #333;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    white-space: nowrap;
+    z-index: 20;
+    margin-bottom: 5px;
+}
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <h1>
+                📅 Minha Escala Unificada
+                <span style="font-size: 0.8rem;">v2.0</span>
+            </h1>
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+                <div class="user-info" id="userInfo">
+                    Carregando...
+                </div>
+                
+                <button class="btn-sair" onclick="sair()">
+                    🚪 Sair
+                </button>
+            </div>
+        </div>
+    </div>
+    
+           
+        <!-- Abas -->
+        <div class="tabs">
+            <button class="tab-btn active" onclick="mudarAba('escalas')">📋 Minhas Escalas</button>
+            <button class="tab-btn" onclick="mudarAba('calendario')">📅 Calendário</button>
+            <button class="tab-btn" onclick="mudarAba('disponibilidade')">📝 Disponibilidade</button>
+            <button class="tab-btn" onclick="mudarAba('resumo')">📊 Resumo</button>
+            <button class="tab-btn" onclick="mudarAbaComMensagens('mensagens')" id="btnAbaMensagens" style="position:relative;">💬 Mensagens <span id="badgeAbaMensagens" style="display:none;background:#dc3545;color:white;border-radius:50%;width:18px;height:18px;font-size:10px;position:absolute;top:4px;right:4px;align-items:center;justify-content:center;">0</span></button>
+        </div>
+        
+        <!-- Aba: Escalas -->
+        <div id="aba-escalas" class="tab-content active">
+            <div class="filtros">
+                <div class="filtro-group">
+                    <label>📅 Período</label>
+                    <select id="filtroPeriodo" onchange="filtrarEventos()">
+                        <option value="todos">Todos os eventos</option>
+                        <option value="proximos">Próximos eventos</option>
+                        <option value="passados">Eventos passados</option>
+                        <option value="hoje">Eventos de hoje</option>
+                        <option value="semana">Próximos 7 dias</option>
+                        <option value="mes">Próximos 30 dias</option>
+                    </select>
+                </div>
+                <div class="filtro-group">
+    <label>🏢 Empresa</label>
+    <select id="filtroEmpresaEscalas" onchange="filtrarEventosPorEmpresa()">
+        <option value="todas">🏢 Todas as empresas</option>
+    </select>
+</div>
+                
+                <div class="filtro-group">
+                    <label>💰 Status Pagamento</label>
+                    <select id="filtroPagamento" onchange="filtrarEventos()">
+                        <option value="todos">Todos</option>
+                        <option value="pago">Pago</option>
+                        <option value="pendente">Pendente</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="eventos-grid" id="eventosGrid">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Carregando suas escalas...</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Aba: Calendário -->
+        <div id="aba-calendario" class="tab-content">
+            <div class="calendario-container">
+                <div class="calendario-header">
+                    <button class="btn-sair" onclick="mudarMes(-1)" style="background: #667eea;">◀</button>
+                    <h3 id="mesAnoAtual"></h3>
+                    <button class="btn-sair" onclick="mudarMes(1)" style="background: #667eea;">▶</button>
+                </div>
+                <div class="calendario-grid" id="calendarioGrid">
+                    <!-- Dias da semana e dias do mês serão gerados aqui -->
+                </div>
+            </div>
+        </div>
+     <!-- Aba: Disponibilidade -->
+<div id="aba-disponibilidade" class="tab-content">
+    <div class="calendario-container">
+        <h3>📝 Minha Disponibilidade</h3>
+        <p style="color: #666; margin-bottom: 1rem;">Marque suas datas disponíveis ou indisponíveis para cada empresa</p>
+        
+        <div style="background: #f8f9fa; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+    <h4>➕ Adicionar disponibilidade</h4>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.75rem; margin-top: 1rem;">
+        <div>
+            <label style="display: block; font-weight: 600; font-size: 0.8rem;">🏢 Empresa *</label>
+            <select id="dispEmpresa" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 6px;">
+                <option value="">Selecione</option>
+            </select>
+        </div>
+        <div>
+            <label style="display: block; font-weight: 600; font-size: 0.8rem;">📅 Data *</label>
+            <input type="date" id="dispData" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 6px;">
+        </div>
+        <div>
+            <label style="display: block; font-weight: 600; font-size: 0.8rem;">✅ Status</label>
+            <select id="dispStatus" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 6px;">
+                <option value="disponivel">✅ Disponível</option>
+                <option value="indisponivel">🔴 Indisponível</option>
+            </select>
+        </div>
+        <div>
+            <label style="display: block; font-weight: 600; font-size: 0.8rem;">🕐 Horário</label>
+            <input type="text" id="dispHorario" placeholder="Ex: 14h-18h" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 6px;">
+        </div>
+        <div>
+            <label style="display: block; font-weight: 600; font-size: 0.8rem;">📝 Observação</label>
+            <input type="text" id="dispObs" placeholder="Motivo..." style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 6px;">
+        </div>
+    </div>
+    <button onclick="adicionarDisponibilidade()" style="margin-top: 1rem; padding: 0.5rem 1rem; background: #28a745; color: white; border: none; border-radius: 6px; cursor: pointer;">✅ Adicionar</button>
+    <p style="font-size: 11px; color: #666; margin-top: 0.5rem;">💡 O valor do cachê será preenchido automaticamente quando a empresa fizer a escala.</p>
+</div>
+        
+        <!-- Filtro de visualização de disponibilidades -->
+<div style="margin-bottom: 1rem; background: #fffefe; padding: 1rem; border-radius: 8px;">
+    <label style="font-weight: 600; margin-bottom: 0.5rem; display: block;">🔍 Filtrar disponibilidades por empresa:</label>
+    <select id="filtroDispEmpresa" onchange="filtrarDisponibilidadesPorEmpresa()" style="width: 100%; padding: 0.6rem; border: 1px solid #ddd; border-radius: 6px;">
+        <option value="todas">📋 Todas as empresas que eu trabalho</option>
+    </select>
+    <p style="font-size: 0.7rem; color: #666; margin-top: 0.5rem;">✓ Mostrando apenas empresas onde você tem disponibilidade cadastrada</p>
+</div>
+        
+        <!-- Totais de valores -->
+        <div id="dispTotais" style="display: none; background: #f9f9f9; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+            <h4>📊 Resumo de Valores</h4>
+            <div style="display: flex; gap: 2rem; flex-wrap: wrap;">
+                <div><strong>✅ Valor Pago:</strong> <span id="dispTotalPago" style="color: #28a745; font-weight: bold;">R$ 0,00</span></div>
+                <div><strong>⏳ Valor a Receber:</strong> <span id="dispTotalReceber" style="color: #ffc107; font-weight: bold;">R$ 0,00</span></div>
+            </div>
+        </div>
+        
+        <h4 style="margin-top: 1rem;">📋 Minhas disponibilidades cadastradas</h4>
+        <div id="listaDisponibilidades">
+            <div class="loading">
+                <p>Carregando disponibilidades...</p>
+            </div>
+        </div>
+    </div>
+</div>
+        <!-- Aba: Resumo -->
+<div id="aba-resumo" class="tab-content">
+    <div class="calendario-container">
+        <h3>📊 Resumo Financeiro</h3>
+        <div id="resumoFinanceiro">
+            <div class="loading"><div class="spinner"></div><p>Calculando...</p></div>
+        </div>
+    </div>
+</div>
+
+<!-- Aba: Mensagens -->
+<div id="aba-mensagens" class="tab-content">
+    <div style="padding:1rem;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+            <h3>💬 Mensagens dos Grupos</h3>
+            <span style="font-size:12px;color:#666;">Grupos criados pelo administrador</span>
+        </div>
+        <div id="abaListaConversas" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem;"></div>
+    </div>
+</div>
+    
+    <!-- Modal de Configuração -->
+    <div id="configModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>⚙️ Configurações</h3>
+                <button class="modal-close" onclick="fecharModal()">&times;</button>
+            </div>
+            <div>
+                <h4>Empresas Conectadas</h4>
+                <div id="empresasConfigList"></div>
+                <hr style="margin: 1rem 0;">
+                <h4>Adicionar Nova Empresa</h4>
+                <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                    <input type="text" id="novaEmpresaNome" placeholder="Nome da empresa" style="padding: 0.5rem;">
+                    <input type="text" id="novaEmpresaUrl" placeholder="URL da API ou identificador" style="padding: 0.5rem;">
+                    <button onclick="adicionarEmpresa()" style="padding: 0.5rem; background: #28a745; color: white; border: none; border-radius: 6px;">➕ Adicionar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="app-unificado-integracao.js"></script>
+    <script src="mensagens-app.js"></script>
+<script>
+// Função para carregar dados do usuário logado no app
+function carregarUsuarioLogado() {
+    const usuarioStr = sessionStorage.getItem('usuarioLogadoUnificado');
+    if (!usuarioStr) {
+        console.log('⚠️ Usuário não logado, redirecionando para login...');
+        window.location.href = 'login-unificado.html';
+        return null;
+    }
+    
+    try {
+        const usuario = JSON.parse(usuarioStr);
+        document.getElementById('userInfo').innerHTML = `👤 ${usuario.nome || usuario.cpf} | ${usuario.tipo === 'elenco' ? '🎬 Elenco' : '🚗 Motorista'}`;
+        console.log('✅ Usuário logado:', usuario);
+        return usuario;
+    } catch(e) {
+        console.error('Erro ao carregar usuário:', e);
+        window.location.href = 'login-unificado.html';
+        return null;
+    }
+}
+// Função para mudar para a aba de disponibilidade
+function irParaDisponibilidade() {
+    mudarAba('disponibilidade');
+}
+
+// Override mudarAba para integrar aba de mensagens
+const _mudarAbaOriginal = window.mudarAba;
+window.mudarAbaComMensagens = function(aba) {
+    if (typeof mudarAba === 'function') mudarAba(aba);
+    if (aba === 'mensagens') renderizarAbaMensagens();
+};
+document.querySelectorAll('.tab-btn').forEach(btn => {
+    const originalOnclick = btn.getAttribute('onclick');
+    if (originalOnclick && originalOnclick.includes("'mensagens'")) {
+        btn.setAttribute('onclick', "mudarAbaComMensagens('mensagens')");
+    }
+});
+
+function renderizarAbaMensagens() {
+    const container = document.getElementById('abaListaConversas');
+    if (!container) return;
+    if (typeof carregarConversasApp !== 'function') {
+        container.innerHTML = '<div style="text-align:center;padding:2rem;color:#666;">Sistema de mensagens carregando...</div>';
+        return;
+    }
+    const conversas = carregarConversasApp();
+    // Atualizar badge da aba
+    const totalNaoLidas = conversas.reduce((s, c) => s + (c.naoLidas || 0), 0);
+    const badge = document.getElementById('badgeAbaMensagens');
+    if (badge) { badge.style.display = totalNaoLidas > 0 ? 'inline-flex' : 'none'; badge.textContent = totalNaoLidas; }
+
+    if (conversas.length === 0) {
+        container.innerHTML = '<div style="text-align:center;padding:2rem;color:#666;background:white;border-radius:12px;"><div style="font-size:3rem;">💬</div><p>Nenhum grupo disponível.</p><p style="font-size:0.85rem;color:#999;margin-top:0.5rem;">O administrador precisa criar um grupo e adicioná-lo como participante.</p></div>';
+        return;
+    }
+    container.innerHTML = conversas.map(conv => {
+        const badgeHtml = conv.naoLidas > 0 ? `<span style="background:#dc3545;color:white;border-radius:50%;padding:2px 7px;font-size:12px;">${conv.naoLidas}</span>` : '';
+        return `<div onclick="abrirConversaDaAba('${conv._empresaId}','${conv.id}')" style="background:white;border-radius:12px;padding:1rem;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.1);transition:all 0.3s;border-left:4px solid #007bff;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+            <div style="display:flex;align-items:center;gap:0.75rem;">
+                <div style="width:45px;height:45px;border-radius:50%;background:#007bff;display:flex;align-items:center;justify-content:center;color:white;font-size:22px;">${conv.avatar || '👥'}</div>
+                <div style="flex:1;min-width:0;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <strong style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${conv.nome}</strong>
+                        ${badgeHtml}
+                    </div>
+                    <div style="font-size:12px;color:#666;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${conv.ultimaMensagem || 'Nenhuma mensagem'}</div>
+                    <div style="font-size:11px;color:#999;margin-top:2px;">${conv.ultimaMensagemData ? new Date(conv.ultimaMensagemData).toLocaleString('pt-BR') : ''}</div>
+                </div>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function abrirConversaDaAba(empresaId, conversaId) {
+    if (typeof abrirModalMensagensApp === 'function') {
+        abrirModalMensagensApp();
+        setTimeout(() => abrirConversaApp(empresaId, conversaId), 100);
+    }
+}
+// Função para obter empresa logada
+function getEmpresaLogada() {
+    try {
+        const empresaStr = sessionStorage.getItem('empresa_logada');
+        if (empresaStr && empresaStr !== 'null' && empresaStr !== 'undefined') {
+            return JSON.parse(empresaStr);
+        }
+    } catch(e) {}
+    
+    // Fallback: tentar obter do usuário logado
+    const usuario = JSON.parse(sessionStorage.getItem('usuarioLogadoUnificado') || '{}');
+    if (usuario.cpf) {
+        // Tentar encontrar empresa baseado no CPF do usuário
+        for (let i = 0; i < localStorage.length; i++) {
+            const chave = localStorage.key(i);
+            if (chave && chave.includes('usuarios_app_')) {
+                try {
+                    const usuarios = JSON.parse(localStorage.getItem(chave) || '[]');
+                    const encontrado = usuarios.find(u => u.cpf === usuario.cpf);
+                    if (encontrado) {
+                        // Extrair ID da empresa da chave
+                        const empresaId = chave.replace('usuarios_app_', '');
+                        return { id: empresaId, nome: 'Empresa' };
+                    }
+                } catch(e) {}
+            }
+        }
+    }
+    
+    return null;
+}
+
+// Verificar login ao carregar a página
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🎬 Inicializando página de escalas...');
+    const usuario = carregarUsuarioLogado();
+    
+    if (!usuario) {
+        return;
+    }
+    
+    // Verificar se o app está inicializado
+    if (typeof app !== 'undefined' && app) {
+        console.log('✅ App já inicializado');
+    } else {
+        console.log('⏳ Aguardando inicialização do app...');
+    }
+});
+// Função para formatar moeda
+function formatarMoeda(input) {
+    let valor = input.value.replace(/\D/g, '');
+    if (valor) {
+        valor = (parseInt(valor) / 100).toFixed(2);
+        valor = valor.replace('.', ',');
+        valor = valor.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+        input.value = 'R$ ' + valor;
+    } else {
+        input.value = '';
+    }
+}
+
+
+
+// Função para filtrar disponibilidades por empresa (APENAS empresas com disponibilidade)
+function filtrarDisponibilidadesPorEmpresa() {
+    if (app) {
+        const filtro = document.getElementById('filtroDispEmpresa');
+        if (filtro) {
+            app.filtroDisponibilidadeEmpresa = filtro.value;
+            console.log(`🔍 Filtrando disponibilidades por empresa: ${filtro.value}`);
+            app.renderizarDisponibilidades();
+        }
+    }
+}
+// Função para excluir escala e remover de disponibilidade e calendário
+function excluirEscala(eventoId, empresaId, dataEvento) {
+    if (!confirm('⚠️ Tem certeza que deseja cancelar esta escala?\n\nIsso irá:\n- Remover você da escala\n- Atualizar sua disponibilidade\n- Remover do calendário da empresa\n\nEsta ação pode ser desfeita?')) {
+        return;
+    }
+    
+    console.log(`🗑️ Excluindo escala: Evento ${eventoId}, Empresa ${empresaId}, Data ${dataEvento}`);
+    
+    // Obter usuário logado
+    const usuarioLogado = JSON.parse(sessionStorage.getItem('usuarioLogadoUnificado') || '{}');
+    const cpfUsuario = usuarioLogado.cpf;
+    
+    if (!cpfUsuario) {
+        alert('❌ Erro: Usuário não identificado!');
+        return;
+    }
+    
+    // 1. Remover das escalas da empresa
+    const chavesEscalas = [
+        `${empresaId}_escalas_eventos`,
+        `escalas_eventos_${empresaId}`,
+        `escalas_eventos`
+    ];
+    
+    let escalasAtualizadas = false;
+    
+    for (const chave of chavesEscalas) {
+        const dados = localStorage.getItem(chave);
+        if (dados && dados !== '[]') {
+            let escalas = JSON.parse(dados);
+            const escalaIndex = escalas.findIndex(e => e.evento_id == eventoId);
+            
+            if (escalaIndex !== -1) {
+                const escala = escalas[escalaIndex];
+                
+                // Remover do elenco_cpfs
+                if (escala.elenco_cpfs && escala.elenco_cpfs.includes(cpfUsuario)) {
+                    escala.elenco_cpfs = escala.elenco_cpfs.filter(cpf => cpf !== cpfUsuario);
+                    console.log(`✅ Removido do elenco: ${cpfUsuario}`);
+                }
+                
+                // Remover como motorista
+                if (escala.motorista_cpf === cpfUsuario) {
+                    escala.motorista_cpf = null;
+                    console.log(`✅ Removido como motorista: ${cpfUsuario}`);
+                }
+                
+                // Se não houver mais ninguém na escala, remover completamente
+                const temElenco = escala.elenco_cpfs && escala.elenco_cpfs.length > 0;
+                const temMotorista = escala.motorista_cpf && escala.motorista_cpf !== null;
+                
+                if (!temElenco && !temMotorista) {
+                    escalas.splice(escalaIndex, 1);
+                    console.log(`✅ Escala completamente removida`);
+                } else {
+                    escalas[escalaIndex] = escala;
+                    console.log(`✅ Escala atualizada`);
+                }
+                
+                localStorage.setItem(chave, JSON.stringify(escalas));
+                escalasAtualizadas = true;
+                break;
+            }
+        }
+    }
+    
+    // 2. Remover das disponibilidades do usuário
+    if (app && app.disponibilidades) {
+        const disponibilidadeIndex = app.disponibilidades.findIndex(d => 
+            d.empresaId === empresaId && d.data === dataEvento
+        );
+        
+        if (disponibilidadeIndex !== -1) {
+            app.disponibilidades.splice(disponibilidadeIndex, 1);
+            console.log(`✅ Disponibilidade removida`);
+            app.salvarDisponibilidades();
+        }
+    }
+    
+    // 3. Recarregar os dados do app
+    if (app) {
+        setTimeout(async () => {
+            await app.carregarTodasEmpresas();
+            await app.carregarDisponibilidades();
+            await app.sincronizarCacheDasEscalas();
+            app.renderizarEventos();
+            app.renderizarDisponibilidades();
+            app.renderizarCalendario();
+            app.renderizarResumo();
+            console.log('✅ Dados recarregados após exclusão');
+        }, 500);
+    }
+    
+    alert('✅ Escala cancelada com sucesso!');
+}
+</script>
+</body>
+</html>

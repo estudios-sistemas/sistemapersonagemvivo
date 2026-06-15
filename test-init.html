@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Inicialização de Teste</title>
+</head>
+<body>
+    <h1>Inicializando dados de teste...</h1>
+    <script>
+        // Criar empresa de teste
+        const empresa = {
+            id: 'EMP001',
+            nome: 'EMPRESA 1',
+            cnpj: '00.000.000/0000-00',
+            pastaSistema: 'EMPRESA 1',
+            cor: '#667eea'
+        };
+        
+        // Criar credenciais de acesso
+        const credencial = {
+            id_empresa: 'EMP001',
+            login: 'admin',
+            senha: 'admin123',
+            senha_provisoria: false
+        };
+        
+        // Criar usuário administrador
+        const usuarioAdmin = {
+            id: 'USR001',
+            nome: 'Administrador',
+            login: 'admin',
+            senha: 'admin123',
+            tipo: 'admin',
+            pasta: 'EMPRESA 1',
+            status: 'ativo',
+            cargo: 'administrador'
+        };
+        
+        // Salvar no localStorage
+        let empresas = JSON.parse(localStorage.getItem('matriz_empresas') || '[]');
+        empresas.push(empresa);
+        localStorage.setItem('matriz_empresas', JSON.stringify(empresas));
+        
+        let credenciais = JSON.parse(localStorage.getItem('matriz_empresas_credenciais') || '[]');
+        credenciais.push(credencial);
+        localStorage.setItem('matriz_empresas_credenciais', JSON.stringify(credenciais));
+        
+        let usuarios = JSON.parse(localStorage.getItem('matriz_usuarios_app_autorizados') || '[]');
+        usuarios.push(usuarioAdmin);
+        localStorage.setItem('matriz_usuarios_app_autorizados', JSON.stringify(usuarios));
+        
+        // Criar usuários do sistema para a empresa
+        const usuariosSistema = [
+            {
+                id: 'FUNC001',
+                nome: 'Gerenciador',
+                login: 'gerenciador',
+                senha: 'gerencia123',
+                tipo: 'funcionario',
+                cargo: 'gerente',
+                status: 'ativo',
+                pasta: 'EMPRESA 1'
+            }
+        ];
+        localStorage.setItem('usuarios_sistema_EMPRESA 1', JSON.stringify(usuariosSistema));
+        
+        // Simular sessão de login
+        const empresaLogada = {
+            id: 'EMP001',
+            nome: 'EMPRESA 1',
+            login: 'admin',
+            tipo: 'admin',
+            pasta: 'EMPRESA 1',
+            status: 'ativo'
+        };
+        sessionStorage.setItem('empresa_logada', JSON.stringify(empresaLogada));
+        sessionStorage.setItem('pasta_atual', 'EMPRESA 1');
+        
+        console.log('✅ Dados de teste criados. Redirecionando para index.html...');
+        setTimeout(() => {
+            window.location.href = 'index.html';
+        }, 500);
+    </script>
+    <p>Você será redirecionado em instantes...</p>
+</body>
+</html>
+

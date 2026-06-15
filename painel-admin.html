@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Matriz - Gestão de Empresas e Usuários</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+        }
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid #dee2e6;
+            flex-wrap: wrap;
+        }
+        .tab {
+            padding: 0.75rem 1.5rem;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            color: #666;
+            transition: all 0.3s;
+            border-radius: 8px 8px 0 0;
+        }
+        .tab.active {
+            color: #667eea;
+            border-bottom: 3px solid #667eea;
+            background: rgba(102, 126, 234, 0.1);
+        }
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 600; color: #333; }
+        .form-group input, .form-group select { width: 100%; padding: 0.75rem; border: 2px solid #e9ecef; border-radius: 8px; font-size: 1rem; }
+        .form-group input:focus { outline: none; border-color: #667eea; }
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: transform 0.2s;
+        }
+        button:hover { transform: translateY(-2px); }
+        .btn-danger { background: linear-gradient(135deg, #dc3545, #c82333); }
+        .btn-warning { background: linear-gradient(135deg, #ffc107, #e0a800); color: #333; }
+        .btn-success { background: linear-gradient(135deg, #28a745, #1e7e34); }
+        .btn-sm { padding: 0.3rem 0.8rem; font-size: 0.75rem; margin: 0 0.2rem; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 0.75rem; text-align: left; border-bottom: 1px solid #dee2e6; vertical-align: middle; }
+        th { background: #f8f9fa; font-weight: 600; }
+        tr:hover { background: #f8f9fa; }
+        .status-badge { display: inline-block; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+        .status-autorizado { background: #d4edda; color: #155724; }
+        .status-pendente { background: #fff3cd; color: #856404; }
+        .status-bloqueado { background: #f8d7da; color: #721c24; }
+        .btn-icon { background: transparent; padding: 0.25rem 0.5rem; font-size: 1rem; margin: 0 2px; box-shadow: none; border-radius: 6px; cursor: pointer; }
+        .btn-icon:hover { transform: scale(1.1); background: rgba(102,126,234,0.1); }
+        .btn-icon-danger { color: #dc3545; }
+        .search-box { margin-bottom: 1rem; display: flex; gap: 0.5rem; flex-wrap: wrap; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+        .stat-card { background: linear-gradient(135deg, #f8f9fa, #e9ecef); padding: 1rem; border-radius: 12px; text-align: center; }
+        .stat-card .number { font-size: 1.8rem; font-weight: bold; }
+        .role-badge { background: #667eea20; color: #667eea; padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.7rem; font-weight: 600; }
+        .role-badge.super { background: #ffc10720; color: #d39e00; }
+        .action-buttons { display: flex; gap: 0.3rem; flex-wrap: wrap; }
+        @media (max-width: 768px) {
+            table, thead, tbody, th, td, tr { display: block; }
+            th { display: none; }
+            td { padding: 0.5rem; position: relative; padding-left: 40%; border-bottom: none; }
+            td::before { content: attr(data-label); position: absolute; left: 0.5rem; font-weight: 600; width: 35%; }
+            tr { border-bottom: 1px solid #dee2e6; margin-bottom: 0.5rem; }
+        }
+    </style>
+    <script>
+        // Verificar se está logado como administrador
+        const adminLogado = JSON.parse(sessionStorage.getItem('admin_logado') || 'null');
+        if (!adminLogado || adminLogado.tipo !== 'administrador') {
+            window.location.href = 'login-admin.html';
+        }
+      function isSuperAdmin() { 
+    const a = JSON.parse(sessionStorage.getItem('admin_logado') || '{}'); 
+    return a.role === 'super_admin'; 
+}
+    </script>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>🏢 Sistema Matriz</h1>
+        <p>Cadastre e gerencie empresas - Cada empresa tem sua pasta exclusiva e isolada</p>
+        <div style="text-align: right; margin-top: 1rem;">
+            <span id="adminNomeDisplay"></span>
+            <button onclick="logoutAdmin()" style="background:#dc3545; padding:0.5rem 1rem;">Sair</button>
+        </div>
+    </div>
+    <div class="tabs">
+        <button class="tab active" data-tab="empresas">🏢 Empresas</button>
+        <button class="tab" data-tab="usuarios">👥 Usuários</button>
+        <button class="tab" data-tab="registros">📋 Registros</button>
+        <button class="tab" data-tab="admins">👨‍💼 Admins</button>
+    </div>
+    
+    <!-- TAB EMPRESAS -->
+    <div id="tab-empresas" class="tab-content active">
+        <div class="card">
+            <h3>🏢 Cadastrar Empresa</h3>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem;">
+                <div class="form-group"><label>Nome *</label><input id="novaEmpresaNome"></div>
+                <div class="form-group"><label>CNPJ *</label><input id="novaEmpresaCnpj" maxlength="18" oninput="formatarCNPJ(this)"></div>
+                <div class="form-group"><label>CPF Titular *</label><input id="novaEmpresaCpfTitular" maxlength="14" oninput="formatarCPF(this)"></div>
+                <div class="form-group">
+                    <label>Pasta *</label>
+                    <select id="novaEmpresaPasta">
+                        <option value="">Selecione</option>
+                        <option value="EMPRESA 1">📁 EMPRESA 1</option>
+                        <option value="EMPRESA 2">📁 EMPRESA 2</option>
+                        <option value="EMPRESA 3">📁 EMPRESA 3</option>
+                        <option value="EMPRESA 4">📁 EMPRESA 4</option>
+                        <option value="EMPRESA 5">📁 EMPRESA 5</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>Login *</label><input id="novaEmpresaLogin"></div>
+                <div class="form-group"><label>Senha *</label><input type="password" id="novaEmpresaSenha"></div>
+                <div class="form-group"><label>Cor</label><input type="color" id="novaEmpresaCor" value="#667eea"></div>
+            </div>
+            <div style="margin-top:1rem;">
+                <button onclick="salvarEmpresa()">✅ Cadastrar</button>
+                <button onclick="limparFormularioEmpresa()" style="background:#6c757d;">🧹 Limpar</button>
+            </div>
+        </div>
+        <div class="card">
+            <h3>📋 Empresas por Pasta</h3>
+            <div class="stats-grid">
+                <div class="stat-card"><h4>Total</h4><div class="number" id="totalEmpresas">0</div></div>
+                <div class="stat-card"><h4>⚠️ Senha Provisória</h4><div class="number" id="totalProvisorias">0</div></div>
+                <div class="stat-card"><h4>✅ Senha Definida</h4><div class="number" id="totalDefinidas">0</div></div>
+            </div>
+            <select id="filtroPastaEmpresas" onchange="renderizarEmpresas()" style="padding:0.5rem;margin-bottom:1rem;">
+                <option value="">📁 Todas pastas</option>
+                <option value="EMPRESA 1">EMPRESA 1</option>
+                <option value="EMPRESA 2">EMPRESA 2</option>
+                <option value="EMPRESA 3">EMPRESA 3</option>
+                <option value="EMPRESA 4">EMPRESA 4</option>
+                <option value="EMPRESA 5">EMPRESA 5</option>
+            </select>
+            <div style="overflow-x:auto;">
+                <table>
+                    <thead><tr><th>ID</th><th>Nome</th><th>CNPJ</th><th>Pasta</th><th>Login</th><th>Status Senha</th><th>Status Acesso</th><th>Ações</th></tr></thead>
+                    <tbody id="listaEmpresas"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <!-- TAB USUÁRIOS APP -->
+    <div id="tab-usuarios" class="tab-content">
+        <div class="card">
+            <h3>👥 Usuários APP</h3>
+            <div class="stats-grid">
+                <div class="stat-card"><h4>✅ Autorizados</h4><div class="number" id="totalAutorizados">0</div></div>
+                <div class="stat-card"><h4>⚠️ Pendentes</h4><div class="number" id="totalPendentesApp">0</div></div>
+                <div class="stat-card"><h4>🔒 Bloqueados</h4><div class="number" id="totalBloqueados">0</div></div>
+            </div>
+            <div class="search-box">
+                <input id="searchUsuarioApp" placeholder="Buscar..." oninput="filtrarUsuariosApp()">
+                <select id="filtroPastaUsuarios" onchange="filtrarUsuariosApp()">
+                    <option value="">Todas pastas</option>
+                    <option value="EMPRESA 1">EMPRESA 1</option>
+                    <option value="EMPRESA 2">EMPRESA 2</option>
+                    <option value="EMPRESA 3">EMPRESA 3</option>
+                    <option value="EMPRESA 4">EMPRESA 4</option>
+                    <option value="EMPRESA 5">EMPRESA 5</option>
+                </select>
+                <button onclick="sincronizarUsuariosComEmpresas()" class="btn-success">🔄 Sincronizar</button>
+            </div>
+            <div style="overflow-x:auto;">
+                <table>
+                    <thead><tr><th>Empresa</th><th>CNPJ</th><th>Login</th><th>Pasta</th><th>Status Senha</th><th>Status Acesso</th><th>Último Acesso</th><th>Ações</th></tr></thead>
+                    <tbody id="listaUsuariosApp"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <!-- TAB REGISTROS -->
+    <div id="tab-registros" class="tab-content">
+        <div class="card">
+            <h3>📋 Registros</h3>
+            <div class="search-box">
+                <input id="searchRegistro" placeholder="Buscar..." oninput="filtrarRegistros()">
+                <select id="filtroPastaRegistro" onchange="filtrarRegistros()">
+                    <option value="">Todas pastas</option>
+                    <option value="EMPRESA 1">EMPRESA 1</option>
+                    <option value="EMPRESA 2">EMPRESA 2</option>
+                    <option value="EMPRESA 3">EMPRESA 3</option>
+                    <option value="EMPRESA 4">EMPRESA 4</option>
+                    <option value="EMPRESA 5">EMPRESA 5</option>
+                </select>
+                <button onclick="limparRegistros()" class="btn-warning">🗑️ Limpar</button>
+            </div>
+            <table>
+                <thead><tr><th>Data/Hora</th><th>Pasta</th><th>Empresa</th><th>Login</th><th>Ação</th><th>Status</th></tr></thead>
+                <tbody id="listaRegistros"></tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- TAB ADMINISTRADORES -->
+    <div id="tab-admins" class="tab-content">
+        <div class="card">
+            <h3>👨‍💼 Cadastrar Admin</h3>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;">
+                <div class="form-group"><label>Nome</label><input id="novoAdminNome"></div>
+                <div class="form-group"><label>Email (login)</label><input id="novoAdminEmail"></div>
+                <div class="form-group"><label>Senha</label><input type="password" id="novoAdminSenha"></div>
+                <div class="form-group"><label>Nível</label><select id="novoAdminRole"><option value="administrador">Admin Padrão</option><option value="super_admin">⭐ Super Admin</option></select></div>
+            </div>
+            <button onclick="cadastrarAdministrador()">➕ Cadastrar</button>
+        </div>
+        <div class="card">
+            <h3>👥 Administradores</h3>
+            <div class="stats-grid">
+                <div class="stat-card"><h4>Total</h4><div class="number" id="totalAdmins">0</div></div>
+                <div class="stat-card"><h4>⭐ Super</h4><div class="number" id="totalSuperAdmins">0</div></div>
+                <div class="stat-card"><h4>🔒 Bloqueados</h4><div class="number" id="totalAdminsBloqueados">0</div></div>
+            </div>
+            <div class="search-box">
+                <input id="searchAdmin" placeholder="Buscar admin..." oninput="renderizarAdministradores()">
+                <button onclick="renderizarAdministradores()" class="btn-success">🔄</button>
+            </div>
+            <table>
+                <thead><tr><th>Nome</th><th>Email</th><th>Nível</th><th>Status</th><th>Ações</th></tr></thead>
+                <tbody id="listaAdmins"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ==================== FUNÇÕES GERAIS ====================
+    function logoutAdmin() { 
+        sessionStorage.removeItem('admin_logado'); 
+        window.location.href = 'login-admin.html'; 
+    }
+    
+    function formatarCPF(i){ 
+        let v=i.value.replace(/\D/g,''); 
+        if(v.length<=11){ 
+            v=v.replace(/(\d{3})(\d)/,'$1.$2'); 
+            v=v.replace(/(\d{3})(\d)/,'$1.$2'); 
+            v=v.replace(/(\d{3})(\d{1,2})$/,'$1-$2'); 
+            i.value=v;
+        } 
+    }
+    
+    function formatarCNPJ(i){ 
+        let v=i.value.replace(/\D/g,''); 
+        if(v.length<=14){ 
+            v=v.replace(/^(\d{2})(\d)/,'$1.$2'); 
+            v=v.replace(/^(\d{2})\.(\d{3})(\d)/,'$1.$2.$3'); 
+            v=v.replace(/\.(\d{3})(\d)/,'.$1/$2'); 
+            v=v.replace(/(\d{4})(\d)/,'$1-$2'); 
+            i.value=v;
+        } 
+    }
+    
+    function limparFormularioEmpresa(){ 
+        ['novaEmpresaNome','novaEmpresaCnpj','novaEmpresaCpfTitular','novaEmpresaLogin','novaEmpresaSenha'].forEach(id=>document.getElementById(id).value=''); 
+        document.getElementById('novaEmpresaPasta').value=''; 
+        document.getElementById('novaEmpresaCor').value='#667eea'; 
+    }
+    
+    function registrarAcaoGlobal(empresa, login, acao, status, pasta){ 
+        let r=JSON.parse(localStorage.getItem('matriz_registros_alteracoes')||'[]'); 
+        r.unshift({id:Date.now(),empresa,login,acao,data:new Date().toLocaleDateString('pt-BR'),hora:new Date().toLocaleTimeString('pt-BR'),status,pasta:pasta||''}); 
+        if(r.length>500) r.pop(); 
+        localStorage.setItem('matriz_registros_alteracoes',JSON.stringify(r)); 
+        renderizarRegistros(); 
+    }
+    
+    function renderizarRegistros(){ 
+        let registros=JSON.parse(localStorage.getItem('matriz_registros_alteracoes')||'[]'); 
+        const p=document.getElementById('filtroPastaRegistro')?.value; 
+        if(p) registros=registros.filter(r=>r.pasta===p); 
+        const t=document.getElementById('listaRegistros'); 
+        t.innerHTML=registros.slice(0,200).map(r=>`<tr><td>${r.data} ${r.hora}</td><td>${r.pasta||'-'}</td><td>${r.empresa}</td><td>${r.login}</td><td>${r.acao}</td><td>${r.status}</td></tr>`).join('')||'<tr><td colspan="6">Nenhum registro</td></tr>'; 
+    }
+    
+    function filtrarRegistros(){ renderizarRegistros(); }
+    
+    function limparRegistros(){ 
+        if(confirm('Limpar todos os registros?')){ 
+            localStorage.setItem('matriz_registros_alteracoes','[]'); 
+            renderizarRegistros(); 
+        } 
+    }
+
+    // ==================== EMPRESAS ====================
+    function salvarEmpresa(){
+        const nome=document.getElementById('novaEmpresaNome').value.trim(), 
+              cnpj=document.getElementById('novaEmpresaCnpj').value.trim(), 
+              cpf=document.getElementById('novaEmpresaCpfTitular').value.trim(), 
+              login=document.getElementById('novaEmpresaLogin').value.trim(), 
+              senha=document.getElementById('novaEmpresaSenha').value, 
+              pasta=document.getElementById('novaEmpresaPasta').value, 
+              cor=document.getElementById('novaEmpresaCor').value;
+        if(!nome||!cnpj||!cpf||!login||!senha||!pasta) return alert('Preencha todos!');
+        if(senha.length<6) return alert('Senha mínima 6 caracteres');
+        let empresas=JSON.parse(localStorage.getItem('matriz_empresas')||'[]');
+        if(empresas.find(e=>e.cnpj===cnpj)) return alert(`CNPJ ${cnpj} já cadastrado!`);
+        const keyPasta=`empresas_login_${pasta}`;
+        let empresasPasta=JSON.parse(localStorage.getItem(keyPasta)||'[]');
+        if(empresasPasta.find(e=>e.login===login)) return alert(`Login "${login}" já existe na ${pasta}`);
+        const id='emp_'+Date.now()+'_'+Math.random().toString(36).substr(2,6);
+        empresas.push({id,nome,cnpj,cpf_titular:cpf.replace(/\D/g,''),pastaSistema:pasta,cor,status_acesso:'ativo',dataCadastro:new Date().toISOString()});
+        localStorage.setItem('matriz_empresas',JSON.stringify(empresas));
+        empresasPasta.push({id,nome,login,senha,senha_provisoria:true,pasta,cnpj});
+        localStorage.setItem(keyPasta,JSON.stringify(empresasPasta));
+        let cred=JSON.parse(localStorage.getItem('matriz_empresas_credenciais')||'[]');
+        cred.push({id_empresa:id,login,senha,senha_provisoria:true,pasta,data_criacao:new Date().toISOString()});
+        localStorage.setItem('matriz_empresas_credenciais',JSON.stringify(cred));
+        let usuarios=JSON.parse(localStorage.getItem('matriz_usuarios_app_autorizados')||'[]');
+        usuarios.push({id,nome,login,senha,cnpj,pasta,status_acesso:'pendente',senha_provisoria:true,data_cadastro:new Date().toISOString(),ultimo_acesso:null});
+        localStorage.setItem('matriz_usuarios_app_autorizados',JSON.stringify(usuarios));
+        registrarAcaoGlobal(nome,login,'Empresa cadastrada','✅ Sucesso',pasta);
+        limparFormularioEmpresa();
+        renderizarEmpresas(); 
+        renderizarUsuariosApp();
+        alert(`✅ ${nome} cadastrada!\nLogin: ${login}\nSenha: ${senha}\nPasta: ${pasta}`);
+    }
+    
+    function renderizarEmpresas(){
+        let empresas=JSON.parse(localStorage.getItem('matriz_empresas')||'[]');
+        const cred=JSON.parse(localStorage.getItem('matriz_empresas_credenciais')||'[]');
+        const filtro=document.getElementById('filtroPastaEmpresas').value;
+        if(filtro) empresas=empresas.filter(e=>e.pastaSistema===filtro);
+        const tbody=document.getElementById('listaEmpresas');
+        let prov=0,def=0;
+        if(!empresas.length){ 
+            tbody.innerHTML='<tr><td colspan="8">Nenhuma empresa</td></tr>'; 
+            document.getElementById('totalEmpresas').textContent='0'; 
+            document.getElementById('totalProvisorias').textContent='0'; 
+            document.getElementById('totalDefinidas').textContent='0'; 
+            return; 
+        }
+        tbody.innerHTML=empresas.map(emp=>{
+            const c=cred.find(cr=>cr.id_empresa===emp.id);
+            const statusSenha=c?(c.senha_provisoria?'⚠️ Provisória':'✅ Definida'):'❌';
+            if(c&&c.senha_provisoria) prov++; 
+            if(c&&!c.senha_provisoria) def++;
+            return `<tr>
+                <td>${emp.id.substr(0,12)}</td>
+                <td>${emp.nome}</td>
+                <td>${emp.cnpj}</td>
+                <td>${emp.pastaSistema}</td>
+                <td>${c?c.login:'-'}</td>
+                <td>${statusSenha}</td>
+                <td><select class="status-select" onchange="alterarStatusEmpresaGlobal('${emp.id}',this.value)"><option value="ativo" ${emp.status_acesso==='ativo'?'selected':''}>✅ Ativo</option><option value="bloqueado" ${emp.status_acesso==='bloqueado'?'selected':''}>🔒 Bloqueado</option></select></td>
+                <td class="action-buttons"><button class="btn-icon" onclick="editarLoginSenhaEmpresaGlobal('${emp.id}')">✏️🔑</button><button class="btn-icon btn-icon-danger" onclick="excluirEmpresaGlobal('${emp.id}')">🗑️</button></td>
+            </tr>`;
+        }).join('');
+        document.getElementById('totalEmpresas').textContent=empresas.length;
+        document.getElementById('totalProvisorias').textContent=prov;
+        document.getElementById('totalDefinidas').textContent=def;
+    }
+    
+    window.alterarStatusEmpresaGlobal=function(id,novo){
+        let empresas=JSON.parse(localStorage.getItem('matriz_empresas')||'[]');
+        let idx=empresas.findIndex(e=>e.id===id);
+        if(idx!==-1){ empresas[idx].status_acesso=novo; localStorage.setItem('matriz_empresas',JSON.stringify(empresas)); }
+        let usuarios=JSON.parse(localStorage.getItem('matriz_usuarios_app_autorizados')||'[]');
+        let u=usuarios.find(u=>u.id===id);
+        if(u){ u.status_acesso=novo==='ativo'?(u.senha_provisoria?'pendente':'autorizado'):'bloqueado'; localStorage.setItem('matriz_usuarios_app_autorizados',JSON.stringify(usuarios)); }
+        renderizarEmpresas(); renderizarUsuariosApp();
+        registrarAcaoGlobal(empresas[idx]?.nome||'Empresa','',`Status alterado para ${novo}`,novo==='ativo'?'Ativado':'Bloqueado','');
+    };
+    
+    window.editarLoginSenhaEmpresaGlobal=function(id){
+        let empresas=JSON.parse(localStorage.getItem('matriz_empresas')||'[]');
+        let emp=empresas.find(e=>e.id===id);
+        if(!emp) return;
+        let cred=JSON.parse(localStorage.getItem('matriz_empresas_credenciais')||'[]');
+        let c=cred.find(cr=>cr.id_empresa===id);
+        if(!c) return;
+        let novoLogin=prompt('Novo login:',c.login);
+        let novaSenha=prompt('Nova senha (mín 6):',c.senha);
+        if(!novoLogin||!novaSenha||novaSenha.length<6) return alert('Login e senha válidos');
+        c.login=novoLogin; c.senha=novaSenha; c.senha_provisoria=false;
+        localStorage.setItem('matriz_empresas_credenciais',JSON.stringify(cred));
+        let key=`empresas_login_${emp.pastaSistema}`;
+        let pastaEmp=JSON.parse(localStorage.getItem(key)||'[]');
+        let idx=pastaEmp.findIndex(e=>e.id===id);
+        if(idx!==-1){ pastaEmp[idx].login=novoLogin; pastaEmp[idx].senha=novaSenha; pastaEmp[idx].senha_provisoria=false; localStorage.setItem(key,JSON.stringify(pastaEmp)); }
+        let usuarios=JSON.parse(localStorage.getItem('matriz_usuarios_app_autorizados')||'[]');
+        let u=usuarios.find(u=>u.id===id);
+        if(u){ u.login=novoLogin; u.senha=novaSenha; u.senha_provisoria=false; localStorage.setItem('matriz_usuarios_app_autorizados',JSON.stringify(usuarios)); }
+        registrarAcaoGlobal(emp.nome,novoLogin,'Credenciais editadas','✏️ Editada',emp.pastaSistema);
+        renderizarEmpresas(); renderizarUsuariosApp();
+        alert('✅ Login/Senha atualizados!');
+    };
+    
+    window.excluirEmpresaGlobal=function(id){
+        if(!confirm('Excluir empresa permanentemente?')) return;
+        let empresas=JSON.parse(localStorage.getItem('matriz_empresas')||'[]');
+        let emp=empresas.find(e=>e.id===id);
+        if(!emp) return;
+        empresas=empresas.filter(e=>e.id!==id);
+        localStorage.setItem('matriz_empresas',JSON.stringify(empresas));
+        let cred=JSON.parse(localStorage.getItem('matriz_empresas_credenciais')||'[]');
+        cred=cred.filter(c=>c.id_empresa!==id);
+        localStorage.setItem('matriz_empresas_credenciais',JSON.stringify(cred));
+        let key=`empresas_login_${emp.pastaSistema}`;
+        let pastaEmp=JSON.parse(localStorage.getItem(key)||'[]');
+        pastaEmp=pastaEmp.filter(e=>e.id!==id);
+        localStorage.setItem(key,JSON.stringify(pastaEmp));
+        let usuarios=JSON.parse(localStorage.getItem('matriz_usuarios_app_autorizados')||'[]');
+        usuarios=usuarios.filter(u=>u.id!==id);
+        localStorage.setItem('matriz_usuarios_app_autorizados',JSON.stringify(usuarios));
+        registrarAcaoGlobal(emp.nome,'','Empresa excluída','🗑️ Excluída',emp.pastaSistema);
+        renderizarEmpresas(); renderizarUsuariosApp();
+        alert('Excluída');
+    };
+
+    // ==================== USUÁRIOS APP ====================
+    function renderizarUsuariosApp(filtro=''){
+        let usuarios=JSON.parse(localStorage.getItem('matriz_usuarios_app_autorizados')||'[]');
+        const pastaFiltro=document.getElementById('filtroPastaUsuarios').value;
+        if(pastaFiltro) usuarios=usuarios.filter(u=>u.pasta===pastaFiltro);
+        if(filtro){ const t=filtro.toLowerCase(); usuarios=usuarios.filter(u=>u.nome.toLowerCase().includes(t)||u.login.toLowerCase().includes(t)); }
+        const tbody=document.getElementById('listaUsuariosApp');
+        let aut=0,pen=0,bloq=0;
+        tbody.innerHTML=usuarios.map(u=>{
+            const prov=u.senha_provisoria;
+            let statusText='',statusClass='';
+            if(u.status_acesso==='bloqueado'){ statusText='🔒 Bloqueado'; statusClass='status-bloqueado'; bloq++; }
+            else if(prov){ statusText='⚠️ Pendente'; statusClass='status-pendente'; pen++; }
+            else{ statusText='✅ Autorizado'; statusClass='status-autorizado'; aut++; }
+            return `<tr>
+                <td>${u.nome}</td>
+                <td>${u.cnpj||'-'}</td>
+                <td>${u.login}</td>
+                <td>${u.pasta}</td>
+                <td>${prov?'⚠️ Provisória':'✅ Definida'}</td>
+                <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                <td>${u.ultimo_acesso?new Date(u.ultimo_acesso).toLocaleString():'Nunca'}</td>
+                <td class="action-buttons"><button class="btn-icon" onclick="editarLoginSenhaApp('${u.id}')">✏️🔑</button><button class="btn-icon" onclick="toggleBloqueioApp('${u.id}')">🔒</button></td>
+            </tr>`;
+        }).join('');
+        if(!usuarios.length) tbody.innerHTML='<tr><td colspan="8">Nenhum usuário</td></tr>';
+        document.getElementById('totalAutorizados').textContent=aut;
+        document.getElementById('totalPendentesApp').textContent=pen;
+        document.getElementById('totalBloqueados').textContent=bloq;
+    }
+    
+    window.editarLoginSenhaApp=function(id){
+        let usuarios=JSON.parse(localStorage.getItem('matriz_usuarios_app_autorizados')||'[]');
+        let u=usuarios.find(u=>u.id===id);
+        if(!u) return;
+        let novoLogin=prompt('Novo login:',u.login);
+        let novaSenha=prompt('Nova senha:',u.senha);
+        if(!novoLogin||!novaSenha||novaSenha.length<6) return alert('Inválido');
+        u.login=novoLogin; u.senha=novaSenha; u.senha_provisoria=false;
+        localStorage.setItem('matriz_usuarios_app_autorizados',JSON.stringify(usuarios));
+        let cred=JSON.parse(localStorage.getItem('matriz_empresas_credenciais')||'[]');
+        let c=cred.find(cr=>cr.id_empresa===id);
+        if(c){ c.login=novoLogin; c.senha=novaSenha; c.senha_provisoria=false; localStorage.setItem('matriz_empresas_credenciais',JSON.stringify(cred)); }
+        let empresas=JSON.parse(localStorage.getItem('matriz_empresas')||'[]');
+        let emp=empresas.find(e=>e.id===id);
+        if(emp) registrarAcaoGlobal(emp.nome,novoLogin,'APP credenciais editadas','✏️',emp.pastaSistema);
+        renderizarEmpresas(); renderizarUsuariosApp();
+        alert('Credenciais APP atualizadas');
+    };
+    
+    window.toggleBloqueioApp=function(id){
+        let usuarios=JSON.parse(localStorage.getItem('matriz_usuarios_app_autorizados')||'[]');
+        let u=usuarios.find(u=>u.id===id);
+        if(!u) return;
+        u.status_acesso=u.status_acesso==='bloqueado'?(u.senha_provisoria?'pendente':'autorizado'):'bloqueado';
+        localStorage.setItem('matriz_usuarios_app_autorizados',JSON.stringify(usuarios));
+        let empresas=JSON.parse(localStorage.getItem('matriz_empresas')||'[]');
+        let emp=empresas.find(e=>e.id===id);
+        if(emp){ emp.status_acesso=u.status_acesso==='bloqueado'?'bloqueado':'ativo'; localStorage.setItem('matriz_empresas',JSON.stringify(empresas)); }
+        renderizarUsuariosApp();
+        alert(`Acesso ${u.status_acesso==='bloqueado'?'BLOQUEADO':'LIBERADO'}`);
+    };
+    
+    function sincronizarUsuariosComEmpresas(){
+        let empresas=JSON.parse(localStorage.getItem('matriz_empresas')||'[]');
+        let cred=JSON.parse(localStorage.getItem('matriz_empresas_credenciais')||'[]');
+        let usuarios=JSON.parse(localStorage.getItem('matriz_usuarios_app_autorizados')||'[]');
+        empresas.forEach(emp=>{
+            let c=cred.find(cr=>cr.id_empresa===emp.id);
+            if(!c) return;
+            let exist=usuarios.find(u=>u.id===emp.id);
+            if(exist){
+                exist.login=c.login; exist.senha=c.senha; exist.senha_provisoria=c.senha_provisoria; exist.nome=emp.nome; exist.pasta=emp.pastaSistema;
+                if(emp.status_acesso==='bloqueado') exist.status_acesso='bloqueado';
+            } else {
+                usuarios.push({id:emp.id,nome:emp.nome,login:c.login,senha:c.senha,cnpj:emp.cnpj,pasta:emp.pastaSistema,status_acesso:emp.status_acesso==='bloqueado'?'bloqueado':'pendente',senha_provisoria:c.senha_provisoria,data_cadastro:new Date().toISOString(),ultimo_acesso:null});
+            }
+        });
+        localStorage.setItem('matriz_usuarios_app_autorizados',JSON.stringify(usuarios));
+        renderizarUsuariosApp();
+        alert('Sincronizado!');
+    }
+    
+    function filtrarUsuariosApp(){ renderizarUsuariosApp(document.getElementById('searchUsuarioApp').value); }
+
+    // ==================== ADMINISTRADORES ====================
+    function inicializarAdminPadrao(){
+        let admins=JSON.parse(localStorage.getItem('matriz_administradores')||'[]');
+        if(!admins.length){
+            admins.push({
+                id:'admin_master_' + Date.now(),
+                nome:'Super Administrador',
+                email:'admin@matriz.com',
+                senha:btoa('admin123'),
+                role:'super_admin',
+                status:'ativo',
+                data_cadastro:new Date().toISOString(),
+                ultimo_acesso:null
+            });
+            localStorage.setItem('matriz_administradores',JSON.stringify(admins));
+            console.log('✅ Super Admin padrão criado: admin@matriz.com / admin123');
+        }
+    }
+    
+    function cadastrarAdministrador(){
+        let nome=document.getElementById('novoAdminNome').value.trim(), 
+            email=document.getElementById('novoAdminEmail').value.trim(), 
+            senha=document.getElementById('novoAdminSenha').value, 
+            role=document.getElementById('novoAdminRole').value;
+        if(!nome||!email||!senha) return alert('Preencha todos');
+        if(senha.length<6) return alert('Senha mín 6');
+        let admins=JSON.parse(localStorage.getItem('matriz_administradores')||'[]');
+        if(admins.find(a=>a.email===email)) return alert('Email já existe');
+        if(role==='super_admin' && !isSuperAdmin()) return alert('Apenas Super Admin pode criar Super Admin');
+        let novo={id:'admin_'+Date.now(),nome,email,senha:btoa(senha),role,status:'ativo',data_cadastro:new Date().toISOString(),ultimo_acesso:null};
+        admins.push(novo);
+        localStorage.setItem('matriz_administradores',JSON.stringify(admins));
+        registrarAcaoGlobal('Sistema',email,'Admin cadastrado','✅', 'Admin');
+        alert(`Admin ${nome} criado!\nLogin: ${email}\nSenha: ${senha}`);
+        document.getElementById('novoAdminNome').value=''; 
+        document.getElementById('novoAdminEmail').value=''; 
+        document.getElementById('novoAdminSenha').value='';
+        renderizarAdministradores();
+    }
+    
+    function renderizarAdministradores() {
+        let admins = JSON.parse(localStorage.getItem('matriz_administradores') || '[]');
+        const search = document.getElementById('searchAdmin')?.value.toLowerCase() || '';
+        let filtered = admins.filter(a => a.nome.toLowerCase().includes(search) || a.email.toLowerCase().includes(search));
+        
+        document.getElementById('totalAdmins').textContent = filtered.length;
+        document.getElementById('totalSuperAdmins').textContent = filtered.filter(a => a.role === 'super_admin').length;
+        document.getElementById('totalAdminsBloqueados').textContent = filtered.filter(a => a.status === 'bloqueado').length;
+        
+        const current = JSON.parse(sessionStorage.getItem('admin_logado') || '{}');
+        const tbody = document.getElementById('listaAdmins');
+        
+        tbody.innerHTML = filtered.map(admin => {
+            const isCurrent = current.email === admin.email;
+            const podeEditar = isSuperAdmin() || (!isCurrent && admin.role !== 'super_admin');
+            
+            return `
+                <tr>
+                    <td data-label="Nome">${admin.nome} ${isCurrent ? '(Você)' : ''}</td>
+                    <td data-label="Email">${admin.email}</td>
+                    <td data-label="Nível"><span class="role-badge ${admin.role === 'super_admin' ? 'super' : ''}">${admin.role === 'super_admin' ? '⭐ Super Admin' : '📌 Admin Padrão'}</span></td>
+                    <td data-label="Status"><span class="status-badge ${admin.status === 'ativo' ? 'status-autorizado' : 'status-bloqueado'}">${admin.status === 'ativo' ? '✅ Ativo' : '🔒 Bloqueado'}</span></td>
+                    <td class="action-buttons">
+                        ${podeEditar ? `<button class="btn-icon" onclick="editarAdminLoginSenha('${admin.id}')" title="Editar Login/Senha">✏️🔑</button>` : ''}
+                        ${podeEditar ? `<button class="btn-icon" onclick="toggleStatusAdmin('${admin.id}')" title="Bloquear/Liberar">🔒</button>` : ''}
+                        ${isSuperAdmin() && admin.email !== current.email ? `<button class="btn-icon btn-icon-danger" onclick="excluirAdmin('${admin.id}')" title="Excluir Administrador">🗑️</button>` : ''}
+                    </td>
+                </tr>
+            `;
+        }).join('');
+        
+        if (!filtered.length) tbody.innerHTML = '</table><td colspan="5">Nenhum administrador cadastrado</td></tr>';
+    }
+    
+    window.editarAdminLoginSenha=function(id){
+        if(!isSuperAdmin()) return alert('Apenas Super Admin pode editar credenciais de admin');
+        let admins=JSON.parse(localStorage.getItem('matriz_administradores')||'[]');
+        let admin=admins.find(a=>a.id===id);
+        if(!admin) return;
+        let novoEmail=prompt('Novo email (login):',admin.email);
+        let novaSenha=prompt('Nova senha (mín 6 caracteres):');
+        if(!novoEmail || !novaSenha || novaSenha.length<6) return alert('Email e senha válidos obrigatórios');
+        let existe=admins.find(a=>a.email===novoEmail && a.id!==id);
+        if(existe) return alert('Email já usado por outro admin');
+        admin.email=novoEmail;
+        admin.senha=btoa(novaSenha);
+        localStorage.setItem('matriz_administradores',JSON.stringify(admins));
+        registrarAcaoGlobal('Sistema',novoEmail,'Admin editado','✏️ Login/Senha alterados','Admin');
+        renderizarAdministradores();
+        alert(`Dados do admin ${admin.nome} atualizados!\nNovo login: ${novoEmail}\nNova senha: ${novaSenha}`);
+    };
+    
+    function toggleStatusAdmin(id){
+        if(!isSuperAdmin()) return alert('Apenas Super Admin');
+        let admins=JSON.parse(localStorage.getItem('matriz_administradores')||'[]');
+        let a=admins.find(ad=>ad.id===id);
+        if(!a) return;
+        const current=JSON.parse(sessionStorage.getItem('admin_logado')||'{}');
+        if(a.email===current.email) return alert('Não pode bloquear a si mesmo');
+        a.status=a.status==='ativo'?'bloqueado':'ativo';
+        localStorage.setItem('matriz_administradores',JSON.stringify(admins));
+        registrarAcaoGlobal('Sistema',a.email,`Admin ${a.status==='ativo'?'desbloqueado':'bloqueado'}`,'Alterado','Admin');
+        renderizarAdministradores();
+        alert(`Status alterado para ${a.status}`);
+    }
+    
+    function excluirAdmin(id){
+        if(!isSuperAdmin()) return alert('Apenas Super Admin');
+        let admins=JSON.parse(localStorage.getItem('matriz_administradores')||'[]');
+        let a=admins.find(ad=>ad.id===id);
+        if(!a) return;
+        const current=JSON.parse(sessionStorage.getItem('admin_logado')||'{}');
+        if(a.email===current.email) return alert('Não pode excluir a si mesmo');
+        if(confirm(`Excluir ${a.nome}?`)){
+            admins=admins.filter(ad=>ad.id!==id);
+            localStorage.setItem('matriz_administradores',JSON.stringify(admins));
+            registrarAcaoGlobal('Sistema',a.email,'Admin excluído','🗑️','Admin');
+            renderizarAdministradores();
+            alert('Excluído');
+        }
+    }
+// Função para garantir que o admin edmonteiro existe e está correto
+function garantirAdminEdmonteiro() {
+    let admins = JSON.parse(localStorage.getItem('matriz_administradores') || '[]');
+    
+    // Verificar se já existe o usuário edmonteiro (por login ou email)
+    const existeEdmonteiro = admins.some(a => a.login === 'edmonteiro' || a.email === 'edmonteiro' || a.email === 'edmonteiro@matriz.com');
+    
+    if (!existeEdmonteiro) {
+        admins.push({
+            id: 'admin_edmonteiro_' + Date.now(),
+            nome: 'Edson Monteiro',
+            login: 'edmonteiro',
+            email: 'edmonteiro',
+            senha: btoa('155145'),
+            role: 'super_admin',
+            status: 'ativo',
+            data_cadastro: new Date().toISOString()
+        });
+        localStorage.setItem('matriz_administradores', JSON.stringify(admins));
+        console.log('✅ Admin edmonteiro criado no painel');
+    } else {
+        // Garantir que a senha está correta
+        const admin = admins.find(a => a.login === 'edmonteiro' || a.email === 'edmonteiro');
+        if (admin && admin.senha !== btoa('155145')) {
+            admin.senha = btoa('155145');
+            localStorage.setItem('matriz_administradores', JSON.stringify(admins));
+            console.log('✅ Senha do edmonteiro corrigida no painel');
+        }
+    }
+}
+    // ==================== INICIALIZAÇÃO ====================
+    function inicializarAbas(){
+        document.querySelectorAll('.tab').forEach(tab=>{
+            tab.addEventListener('click',()=>{
+                const id=tab.dataset.tab;
+                document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById(`tab-${id}`).classList.add('active');
+                if(id==='empresas') renderizarEmpresas();
+                if(id==='usuarios') renderizarUsuariosApp();
+                if(id==='registros') renderizarRegistros();
+                if(id==='admins') renderizarAdministradores();
+            });
+        });
+    }
+    
+document.addEventListener('DOMContentLoaded',()=>{
+    // Garantir que o admin logado tem os campos corretos
+    const adminLogado = JSON.parse(sessionStorage.getItem('admin_logado') || '{}');
+    if (adminLogado && (!adminLogado.nome || !adminLogado.role)) {
+        // Tentar buscar dados completos do admin
+        const admins = JSON.parse(localStorage.getItem('matriz_administradores') || '[]');
+        const adminCompleto = admins.find(a => a.login === adminLogado.login || a.email === adminLogado.email);
+        if (adminCompleto) {
+            adminLogado.nome = adminCompleto.nome;
+            adminLogado.role = adminCompleto.role;
+            adminLogado.email = adminCompleto.email;
+            sessionStorage.setItem('admin_logado', JSON.stringify(adminLogado));
+        }
+    }
+    
+    garantirAdminEdmonteiro();
+    inicializarAdminPadrao();
+    
+    const admin = JSON.parse(sessionStorage.getItem('admin_logado') || '{}');
+    document.getElementById('adminNomeDisplay').innerHTML = `👋 ${admin.nome || admin.login || 'Admin'} ${admin.role === 'super_admin' ? '⭐' : ''}`;
+    
+    if(!isSuperAdmin()){
+        let opt = document.getElementById('superOption');
+        if(opt) opt.style.display = 'none';
+    }
+    
+    inicializarAbas();
+    renderizarEmpresas();
+    renderizarUsuariosApp();
+    renderizarRegistros();
+    renderizarAdministradores();
+});
+</script>
+</body>
+</html>

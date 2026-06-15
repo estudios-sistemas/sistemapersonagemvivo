@@ -1,0 +1,4 @@
+{
+    "permissions": ["notifications"],
+    "display": "standalone"
+}

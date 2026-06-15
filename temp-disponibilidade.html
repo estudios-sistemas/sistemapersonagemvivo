@@ -1,0 +1,111 @@
+<!-- Abas de navegação -->
+<div style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem; border-bottom: 2px solid #dee2e6;">
+  <button class="btn" id="btnMinhasEscalas" onclick="mostrarAbaLogada('escalas')" style="background: #007bff; color: white;">
+    📋 Minhas Escalas
+  </button>
+  <button class="btn" id="btnDisponibilidade" onclick="mostrarAbaLogada('disponibilidade')" style="background: #6c757d; color: white;">
+    📅 Disponibilidade
+  </button>
+</div>
+
+<!-- Conteúdo: Minhas Escalas -->
+<div id="conteudo-escalas" style="display: block;">
+<h3> 📋 Minhas Escalas</h3>
+<p>Eventos em que você está escalado</p>
+
+<!-- Filtros -->
+<div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; align-items: flex-end;">
+  <div class="form-group" style="min-width: 150px;">
+    <label>Período</label>
+    <select id="filtro_periodo_escalas" onchange="filtrarMinhasEscalas()">
+      <option value="todos">Todos</option>
+      <option value="proximos">Próximos</option>
+      <option value="passados">Passados</option>
+    </select>
+  </div>
+  
+  <div style="display: flex; gap: 0.5rem; align-items: flex-end;">
+    <button class="btn" onclick="filtrarMinhasEscalas()"> 🔍 Atualizar</button>
+  </div>
+</div>
+
+<!-- Tabela de Escalas -->
+<div class="table-container">
+  <table class="tabela-relatorio" style="width: 100%;">
+    <thead>
+      <tr>
+        <th>Data</th>
+        <th>Horário Início</th>
+        <th>Horário Fim</th>
+        <th>Cliente</th>
+        <th>Telefone</th>
+        <th>Local</th>
+        <th>Endereço</th>
+        <th>Personagem</th>
+        <th>Cachê</th>
+        <th>Pagamento</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody id="tabelaMinhasEscalas">
+      <tr>
+        <td colspan="11" style="text-align: center; padding: 2rem;">
+          Nenhuma escala encontrada
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+</div>
+
+<!-- Conteúdo: Disponibilidade -->
+<div id="conteudo-disponibilidade" style="display: none;">
+  <h3> 📅 Agenda de Disponibilidade</h3>
+  <p>Informe suas datas disponíveis ou indisponíveis</p>
+  
+  <!-- Formulário de disponibilidade -->
+  <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 8px; margin-bottom: 1.5rem;">
+    <h4>Adicionar Disponibilidade</h4>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Data *</label>
+        <input type="date" id="data_disponibilidade" required style="width: 100%;">
+      </div>
+      <div class="form-group">
+        <label>Status *</label>
+        <select id="status_disponibilidade" required style="width: 100%;">
+          <option value="disponivel">✅ Disponível</option>
+          <option value="indisponivel">❌ Indisponível</option>
+        </select>
+      </div>
+      <div class="form-group" style="flex: 2;">
+        <label>Observação</label>
+        <input type="text" id="obs_disponibilidade" placeholder="Ex: Viagem, compromisso pessoal..." style="width: 100%;">
+      </div>
+    </div>
+    <button class="btn primary" onclick="salvarDisponibilidade()">
+      💾 Salvar Disponibilidade
+    </button>
+  </div>
+  
+  <!-- Lista de disponibilidades -->
+  <div class="table-container">
+    <table class="tabela-relatorio" style="width: 100%;">
+      <thead>
+        <tr>
+          <th>Data</th>
+          <th>Status</th>
+          <th>Observação</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody id="tabelaDisponibilidade">
+        <tr>
+          <td colspan="4" style="text-align: center; padding: 2rem;">
+            Nenhuma disponibilidade cadastrada
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

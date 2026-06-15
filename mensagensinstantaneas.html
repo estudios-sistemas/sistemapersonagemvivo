@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Correção - Sincronização de Mensagens</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+        .header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+        .content {
+            padding: 30px;
+        }
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+        }
+        .info-box h3 {
+            color: #1976d2;
+            margin-bottom: 10px;
+        }
+        .info-box p {
+            color: #333;
+            font-size: 14px;
+        }
+        .status-card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #dee2e6;
+        }
+        .status-item:last-child {
+            border-bottom: none;
+        }
+        .status-label {
+            font-weight: 600;
+            color: #495057;
+        }
+        .status-value {
+            color: #007bff;
+            font-family: monospace;
+        }
+        .btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            margin: 5px;
+            transition: all 0.3s;
+        }
+        .btn:hover {
+            background: #0056b3;
+            transform: translateY(-2px);
+        }
+        .btn-success {
+            background: #28a745;
+        }
+        .btn-success:hover {
+            background: #1e7e34;
+        }
+        .btn-warning {
+            background: #ffc107;
+            color: #333;
+        }
+        .btn-warning:hover {
+            background: #e0a800;
+        }
+        .btn-danger {
+            background: #dc3545;
+        }
+        .btn-danger:hover {
+            background: #bd2130;
+        }
+        .log-area {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            border-radius: 8px;
+            padding: 15px;
+            font-family: 'Consolas', monospace;
+            font-size: 12px;
+            height: 300px;
+            overflow-y: auto;
+            margin-top: 20px;
+        }
+        .log-entry {
+            padding: 4px 0;
+            border-bottom: 1px solid #333;
+            font-family: monospace;
+        }
+        .log-success { color: #4ec9b0; }
+        .log-error { color: #f48771; }
+        .log-info { color: #569cd6; }
+        .log-warning { color: #dcdcaa; }
+        .user-list {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        .user-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+        }
+        .user-item:hover {
+            background: #f0f0f0;
+        }
+        .user-item.selected {
+            background: #007bff20;
+            border-left: 3px solid #007bff;
+        }
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .badge-system { background: #007bff; color: white; }
+        .badge-app { background: #28a745; color: white; }
+        .badge-active { background: #28a745; color: white; }
+        .badge-inactive { background: #dc3545; color: white; }
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .tab {
+            padding: 10px 20px;
+            background: #e9ecef;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .tab.active {
+            background: #007bff;
+            color: white;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #007bff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔧 Correção - Sincronização de Mensagens</h1>
+            <p>Ferramenta para forçar sincronização de usuários e grupos</p>
+        </div>
+        <div class="content">
+            <div class="info-box">
+                <h3>⚠️ Problema Identificado</h3>
+                <p>Usuários cadastrados no sistema não estão visualizando os grupos criados pelo administrador. 
+                   Esta ferramenta irá forçar a sincronização e corrigir o problema.</p>
+            </div>
+
+            <div class="tabs">
+                <div class="tab active" onclick="showTab('usuarios')">👥 Usuários</div>
+                <div class="tab" onclick="showTab('conversas')">💬 Conversas</div>
+                <div class="tab" onclick="showTab('logs')">📋 Logs</div>
+            </div>
+
+            <div id="tab-usuarios" class="tab-content active">
+                <div class="status-card">
+                    <h3>👤 Usuário Logado Atual</h3>
+                    <div id="usuarioAtualInfo">Carregando...</div>
+                </div>
+
+                <div class="status-card">
+                    <h3>📋 Usuários do Sistema (Ativos)</h3>
+                    <div id="listaUsuarios" class="user-list">Carregando...</div>
+                </div>
+
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button class="btn btn-success" onclick="forcarSincronizacaoUsuarioAtual()">🔄 Sincronizar Usuário Atual</button>
+                    <button class="btn btn-warning" onclick="verificarConversasUsuarioAtual()">🔍 Verificar Conversas</button>
+                    <button class="btn" onclick="carregarDados()">🔄 Recarregar</button>
+                </div>
+            </div>
+
+            <div id="tab-conversas" class="tab-content">
+                <div class="status-card">
+                    <h3>💬 Conversas do Sistema</h3>
+                    <div id="listaConversas" class="user-list">Carregando...</div>
+                </div>
+
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button class="btn btn-success" onclick="forcarSincronizacaoTodasConversas()">🔄 Sincronizar Todas Conversas</button>
+                    <button class="btn btn-danger" onclick="limparCacheConversas()">🗑️ Limpar Cache</button>
+                </div>
+            </div>
+
+            <div id="tab-logs" class="tab-content">
+                <div class="log-area" id="logArea">
+                    <div class="log-entry log-info">📋 Sistema pronto para diagnóstico...</div>
+                </div>
+                <button class="btn" onclick="limparLogs()" style="margin-top: 10px;">🗑️ Limpar Logs</button>
+            </div>
+
+            <hr style="margin: 20px 0;">
+
+            <div style="text-align: center;">
+                <button class="btn btn-success" onclick="aplicarCorrecaoCompleta()" style="padding: 15px 30px; font-size: 18px;">
+                    🚀 APLICAR CORREÇÃO COMPLETA
+                </button>
+                <p style="font-size: 12px; color: #666; margin-top: 10px;">
+                    Esta ação irá forçar a sincronização de todos os usuários e grupos
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- O botão de "Sincronizar" que estava fixo no HTML original -->
+    <button id="btnSyncMensagens" style="position: fixed; bottom: 90px; right: 20px; z-index: 999999; background: #28a745; color: white; border: none; padding: 8px 12px; border-radius: 50px; cursor: pointer; font-size: 12px; display: none;">
+        🔄 Sincronizar
+    </button>
+
+    <script>
+        let empresaLogada = null;
+        
+        /**
+         * Adiciona uma mensagem ao log na interface e no console.
+         * @param {string} mensagem - A mensagem a ser logada.
+         * @param {'info' | 'success' | 'warning' | 'error'} tipo - O tipo da mensagem para estilização.
+         */
+        function adicionarLog(mensagem, tipo = 'info') {
+            const logArea = document.getElementById('logArea');
+            const timestamp = new Date().toLocaleTimeString();
+            const className = `log-${tipo}`;
+            // Adiciona a nova entrada no topo do log
+            logArea.innerHTML = `<div class="log-entry ${className}">[${timestamp}] ${mensagem}</div>` + logArea.innerHTML;
+            // Mantém a rolagem no final (após a adição)
+            logArea.scrollTop = logArea.scrollHeight;
+            console.log(`[${tipo.toUpperCase()}] ${mensagem}`);
+        }
+
+        /** Limpa todas as mensagens da área de log. */
+        function limparLogs() {
+            document.getElementById('logArea').innerHTML = '<div class="log-entry log-info">📋 Logs limpos...</div>';
+        }
+
+        /**
+         * Alterna a exibição das abas de conteúdo.
+         * @param {string} tabName - O nome da aba a ser exibida (ex: 'usuarios', 'conversas', 'logs').
+         */
+        function showTab(tabName) {
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            // Ativa a aba clicada
+            event.target.classList.add('active');
+            // Exibe o conteúdo correspondente
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+        }
+
+        /**
+         * Recupera os dados da empresa logada do sessionStorage.
+         * @returns {object | null} Os dados da empresa logada ou null se não encontrados.
+         */
+        function getEmpresaLogada() {
+            try {
+                const empresaStr = sessionStorage.getItem('empresa_logada');
+                if (empresaStr && empresaStr !== 'null' && empresaStr !== 'undefined') {
+                    empresaLogada = JSON.parse(empresaStr);
+                    window.empresaLogada = empresaLogada; // Expõe globalmente se necessário
+                    return empresaLogada;
+                }
+            } catch(e) {
+                adicionarLog(`Erro ao ler empresa do sessionStorage: ${e.message}`, 'error');
+            }
+            return null;
+        }
+
+        /**
+         * Recupera os dados do usuário logado. Assume um usuário padrão "admin" se não encontrado.
+         * Usa dados do sessionStorage e localStorage para buscar informações do usuário.
+         * @returns {object | null} Um objeto com id, nome, login e cpf do usuário, ou null em caso de erro.
+         */
+        function getUsuarioLogado() {
+            try {
+                const empresa = getEmpresaLogada();
+                if (!empresa) return null;
+                
+                // Tenta obter o login do sessionStorage, com fallback para 'admin'
+                const loginSalvo = sessionStorage.getItem('usuario_logado') || 'admin';
+                const usuariosKey = `usuarios_sistema_${empresa.pasta}`;
+                const usuarios = JSON.parse(localStorage.getItem(usuariosKey) || '[]');
+                
+                // Busca o usuário na lista de usuários do sistema
+                const usuario = usuarios.find(u => u.login === loginSalvo || u.id === loginSalvo);
+                
+                if (usuario) {
+                    // Retorna os dados essenciais do usuário
+                    return { id: usuario.id, nome: usuario.nome, login: usuario.login, cpf: usuario.cpf };
+                }
+                
+                // Caso o usuário não seja encontrado na lista, assume o "admin" padrão
+                return { id: 'admin', nome: 'Administrador', login: 'admin', cpf: '' };
+            } catch(e) {
+                adicionarLog(`Erro ao obter usuário logado: ${e.message}`, 'error');
+                return null;
+            }
+        }
+
+        /**
+         * Carrega a lista de usuários cadastrados no sistema, incluindo elencos e motoristas.
+         * @returns {Array<object>} Uma lista de objetos de usuários.
+         */
+        function carregarUsuarios() {
+            const empresa = getEmpresaLogada();
+            if (!empresa) return [];
+            
+            const usuariosKey = `usuarios_sistema_${empresa.pasta}`;
+            let usuariosSistema = JSON.parse(localStorage.getItem(usuariosKey) || '[]');
+            
+            // Tenta carregar listas adicionais que podem conter usuários
+            const elencoKey = `${empresa.id}_elenco_cadastrados`;
+            const elenco = JSON.parse(localStorage.getItem(elencoKey) || '[]');
+            const motoristasKey = `${empresa.id}_motoristas`;
+            const motoristas = JSON.parse(localStorage.getItem(motoristasKey) || '[]');
+            
+            // Consolida todas as fontes de usuários, adicionando um campo 'tipo' para identificação
+            const todosUsuarios = [
+                ...usuariosSistema.map(u => ({ ...u, tipo: 'sistema', icone: '👔' })),
+                ...elenco.map(e => ({ id: e.cpf || e.id, nome: e.nome_elenco || e.nome, tipo: 'elenco', icone: '🎭', status: 'ativo' })),
+                ...motoristas.map(m => ({ id: m.cpf || m.id, nome: m.nome_motorista || m.nome, tipo: 'motorista', icone: '🚗', status: 'ativo' }))
+            ];
+            
+            return todosUsuarios;
+        }
+
+        /**
+         * Carrega a lista de conversas salvas no localStorage.
+         * @returns {Array<object>} Uma lista de objetos de conversas.
+         */
+        function carregarConversas() {
+            const empresa = getEmpresaLogada();
+            if (!empresa) return [];
+            
+            const storageKey = `${empresa.id}_conversas`;
+            return JSON.parse(localStorage.getItem(storageKey) || '[]');
+        }
+
+        /**
+         * Força a sincronização das conversas para o usuário logado atualmente.
+         * Verifica quais conversas o usuário participa e atualiza a interface.
+         */
+        async function forcarSincronizacaoUsuarioAtual() {
+            const empresa = getEmpresaLogada();
+            const usuarioAtual = getUsuarioLogado();
+            
+            if (!empresa || !usuarioAtual) {
+                adicionarLog('❌ Erro: Empresa ou usuário não encontrado', 'error');
+                return;
+            }
+            
+            adicionarLog(`🔄 Forçando sincronização para: ${usuarioAtual.nome} (ID: ${usuarioAtual.id})`, 'info');
+            
+            const storageKey = `${empresa.id}_conversas`;
+            let todasConversas = JSON.parse(localStorage.getItem(storageKey) || '[]');
+            
+            // Filtra as conversas onde o usuário atual é participante (verificando por ID e CPF)
+            const conversasUsuario = todasConversas.filter(conv => {
+                if (!conv.participantes) return false;
+                return conv.participantes.includes(usuarioAtual.id) || 
+                       conv.participantes.includes(usuarioAtual.cpf) ||
+                       (conv.participantesInfo && conv.participantesInfo.some(p => p.id === usuarioAtual.id));
+            });
+            
+            adicionarLog(`📋 Encontradas ${conversasUsuario.length} conversas para ${usuarioAtual.nome}`, 'success');
+            
+            if (conversasUsuario.length === 0) {
+                adicionarLog(`⚠️ Nenhuma conversa encontrada para este usuário. Verifique se o ID (${usuarioAtual.id}) está correto e se o usuário foi adicionado aos grupos.`, 'warning');
+            } else {
+                // Atualiza o cache global de mensagens se a função existir
+                if (typeof window.mensagensCache !== 'undefined') {
+                    window.mensagensCache.conversas = conversasUsuario;
+                } else {
+                    window.mensagensCache = { conversas: conversasUsuario };
+                }
+                
+                // Tenta atualizar a interface do modal de mensagens, se existir
+                if (typeof window.carregarConversasNoModal === 'function') {
+                    await window.carregarConversasNoModal();
+                    adicionarLog('✅ Interface de mensagens atualizada com as conversas do usuário', 'success');
+                }
+                
+                // Atualiza o ícone de notificação (badge) se a função existir
+                if (typeof window.atualizarBadgeMensagens === 'function') {
+                    window.atualizarBadgeMensagens();
+                }
+            }
+            
+            // Atualiza a exibição na aba 'Usuários'
+            verificarConversasUsuarioAtual();
+        }
+        
+        /**
+         * Exibe as informações do usuário logado e a quantidade de conversas em que ele participa.
+         */
+        async function verificarConversasUsuarioAtual() {
+            const empresa = getEmpresaLogada();
+            const usuarioAtual = getUsuarioLogado();
+            
+            if (!empresa || !usuarioAtual) return;
+            
+            const storageKey = `${empresa.id}_conversas`;
+            let todasConversas = JSON.parse(localStorage.getItem(storageKey) || '[]');
+            
+            const conversasUsuario = todasConversas.filter(conv => {
+                if (!conv.participantes) return false;
+                return conv.participantes.includes(usuarioAtual.id) || 
+                       conv.participantes.includes(usuarioAtual.cpf);
+            });
+            
+            const container = document.getElementById('usuarioAtualInfo');
+            container.innerHTML = `
+                <div class="status-item">
+                    <span class="status-label">Nome:</span>
+                    <span class="status-value">${usuarioAtual.nome}</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">ID:</span>
+                    <span class="status-value">${usuarioAtual.id}</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">CPF:</span>
+                    <span class="status-value">${usuarioAtual.cpf || 'Não informado'}</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Conversas em que participa:</span>
+                    <span class="status-value">${conversasUsuario.length}</span>
+                </div>
+            `;
+            
+            if (conversasUsuario.length > 0) {
+                adicionarLog(`✅ Usuário ${usuarioAtual.nome} participa de ${conversasUsuario.length} conversa(s)`, 'success');
+                conversasUsuario.forEach(conv => {
+                    adicionarLog(`   📌 ${conv.nome} (${conv.tipo})`, 'info');
+                });
+            }
+        }
+        
+        /**
+         * Carrega e exibe a lista de todos os usuários cadastrados na interface.
+         */
+        function carregarListaUsuarios() {
+            const usuarios = carregarUsuarios();
+            const usuarioAtual = getUsuarioLogado();
+            const container = document.getElementById('listaUsuarios');
+            
+            if (usuarios.length === 0) {
+                container.innerHTML = '<div style="padding: 1rem; text-align: center; color: #999;">Nenhum usuário cadastrado</div>';
+                return;
+            }
+            
+            // Ordena os usuários para que o usuário atual (se for o admin) apareça primeiro
+            usuarios.sort((a, b) => {
+                if (usuarioAtual && a.id === usuarioAtual.id) return -1;
+                if (usuarioAtual && b.id === usuarioAtual.id) return 1;
+                return 0;
+            });
+
+            container.innerHTML = usuarios.map(user => {
+                const isSelected = usuarioAtual && user.id === usuarioAtual.id;
+                const statusClass = user.status === 'ativo' ? 'badge-active' : 'badge-inactive';
+                const tipoClass = user.tipo === 'sistema' ? 'badge-system' : 'badge-app';
+                return `
+                    <div class="user-item ${isSelected ? 'selected' : ''}" onclick="selecionarUsuario('${user.id}')">
+                        <div>
+                            <span>${user.icone || '👤'}</span>
+                            <strong>${user.nome}</strong>
+                            <span class="badge ${tipoClass}" style="margin-left: 8px;">${user.tipo}</span>
+                        </div>
+                        <div>
+                            <span class="badge ${statusClass}">${user.status || 'ativo'}</span>
+                            <span style="font-size: 11px; color: #666; margin-left: 8px;">ID: ${user.id}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        /**
+         * Carrega e exibe a lista de todas as conversas salvas na interface.
+         */
+        function carregarListaConversas() {
+            const conversas = carregarConversas();
+            const usuarioAtual = getUsuarioLogado();
+            const container = document.getElementById('listaConversas');
+            
+            if (conversas.length === 0) {
+                container.innerHTML = '<div style="padding: 1rem; text-align: center; color: #999;">Nenhuma conversa criada</div>';
+                return;
+            }
+            
+            container.innerHTML = conversas.map(conv => {
+                const usuarioEstaNaConversa = conv.participantes && conv.participantes.includes(usuarioAtual?.id);
+                return `
+                    <div class="user-item" style="flex-direction: column; align-items: flex-start;">
+                        <div style="display: flex; justify-content: space-between; width: 100%;">
+                            <div>
+                                <strong>${conv.avatar || '💬'} ${conv.nome}</strong>
+                                <span class="badge badge-system" style="margin-left: 8px;">${conv.tipo}</span>
+                            </div>
+                            <div>
+                                ${usuarioEstaNaConversa ? '<span class="badge badge-success" style="background: #28a745;">✅ Você participa</span>' : ''}
+                            </div>
+                        </div>
+                        <div style="font-size: 12px; color: #666; margin-top: 5px;">
+                            Participantes: ${conv.participantes?.length || 0} | 
+                            Criado em: ${new Date(conv.dataCriacao).toLocaleDateString()}
+                        </div>
+                        <div style="font-size: 11px; color: #999; margin-top: 5px;">
+                            IDs: ${conv.participantes?.join(', ') || 'Nenhum'}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        /**
+         * Força a sincronização de todas as conversas para todos os usuários.
+         * Este processo verifica as conversas e, se o usuário não estiver em alguma,
+         * pode ser usado para gerar notificações ou atualizações.
+         * No contexto atual, foca em garantir que notificações de adição sejam criadas.
+         */
+        async function forcarSincronizacaoTodasConversas() {
+            const empresa = getEmpresaLogada();
+            if (!empresa) return;
+            
+            adicionarLog('🔄 Forçando sincronização de todas as conversas para todos os usuários...', 'info');
+            
+            const storageKey = `${empresa.id}_conversas`;
+            let todasConversas = JSON.parse(localStorage.getItem(storageKey) || '[]');
+            const usuarios = carregarUsuarios();
+            
+            let notificacoesCriadas = 0;
+            
+            // Itera sobre cada usuário para verificar suas conversas
+           for (const usuario of usuarios) {
+    const conversasUsuario = todasConversas.filter(conv => 
+        conv.participantes && conv.participantes.includes(usuario.id)
+    );
+    
+    if (conversasUsuario.length > 0) {
+        adicionarLog(`✅ Usuário ${usuario.nome} (ID: ${usuario.id}) participa de ${conversasUsuario.length} conversa(s)`, 'success');
+        
+        // USAR A FUNÇÃO CORRIGIDA DE NOTIFICAÇÃO
+        for (const conv of conversasUsuario) {
+            // Verificar se já existe notificação recente
+            const notifKey = `notificacao_usuario_${usuario.id}`;
+            let notificacoes = JSON.parse(localStorage.getItem(notifKey) || '[]');
+            
+            const jaNotificado = notificacoes.some(n => 
+                n.conversaId === conv.id && 
+                n.tipo === 'grupo_adicionado' &&
+                (new Date() - new Date(n.data)) < 60000
+            );
+            
+            if (!jaNotificado) {
+                // Usar a função global se disponível
+                if (typeof window.criarNotificacaoParaUsuario === 'function') {
+                    window.criarNotificacaoParaUsuario(
+                        usuario.id,
+                        conv.id,
+                        conv.nome,
+                        `📢 Você foi adicionado ao ${conv.tipo === 'grupo' ? 'grupo' : 'chat'} "${conv.nome}"`,
+                        'grupo_adicionado'
+                    );
+                } else {
+                    // Fallback
+                    notificacoes.push({
+                        id: Date.now() + Math.random(),
+                        tipo: 'grupo_adicionado',
+                        conversaId: conv.id,
+                        conversaNome: conv.nome,
+                        mensagem: `📢 Você foi adicionado ao ${conv.tipo === 'grupo' ? 'grupo' : 'chat'} "${conv.nome}"`,
+                        data: new Date().toISOString(),
+                        lida: false
+                    });
+                    localStorage.setItem(notifKey, JSON.stringify(notificacoes));
+                }
+                notificacoesCriadas++;
+                adicionarLog(`   🔔 Notificação criada para "${conv.nome}" para usuário ${usuario.nome}`, 'info');
+            }
+        }
+    }
+}
+            adicionarLog(`📢 Sincronização de conversas concluída. Total de novas notificações de adição criadas: ${notificacoesCriadas}`, 'success');
+            
+            // Tenta forçar um recarregamento completo do aplicativo para refletir as mudanças
+            if (typeof window.forcarRecarregamentoUsuarioApp === 'function') {
+                await window.forcarRecarregamentoUsuarioApp();
+            }
+            
+            // Atualiza a lista de conversas na interface
+            carregarListaConversas();
+        }
+        
+        /** Limpa o cache de mensagens (usado pelo sistema de mensagens). */
+        function limparCacheConversas() {
+            if (confirm('⚠️ Tem certeza que deseja limpar o cache de conversas? Isso pode forçar o recarregamento de dados do sistema de mensagens.')) {
+                // Limpa o cache global se existir
+                if (typeof window.mensagensCache !== 'undefined') {
+                    window.mensagensCache = {};
+                }
+                adicionarLog('🗑️ Cache de conversas limpo', 'warning');
+                // Tenta recarregar as conversas na interface principal, se a função existir
+                setTimeout(() => {
+                    if (typeof window.carregarConversas === 'function') {
+                        window.carregarConversas();
+                    }
+                }, 500);
+            }
+        }
+        
+        /**
+         * Executa uma série de verificações e correções para o problema de sincronização.
+         * Tenta abranger os cenários mais comuns de falha na exibição de mensagens.
+         */
+        async function aplicarCorrecaoCompleta() {
+            adicionarLog('🚀 INICIANDO CORREÇÃO COMPLETA...', 'info');
+            
+            // 1. Verifica a empresa logada
+            const empresa = getEmpresaLogada();
+            if (!empresa) {
+                adicionarLog('❌ Erro: Empresa não encontrada. Por favor, faça login novamente.', 'error');
+                // Redireciona para a página de login se a empresa não for encontrada
+                setTimeout(() => { window.location.href = 'login.html'; }, 2000);
+                return;
+            }
+            adicionarLog(`✅ Empresa: ${empresa.nome}`, 'success');
+            
+            // 2. Verifica o usuário logado
+            const usuarioAtual = getUsuarioLogado();
+            if (!usuarioAtual) {
+                 adicionarLog('❌ Erro: Usuário não encontrado. Verifique o login.', 'error');
+                 return;
+            }
+            adicionarLog(`✅ Usuário atual: ${usuarioAtual.nome} (ID: ${usuarioAtual.id})`, 'success');
+            
+            // 3. Carrega todas as conversas do sistema
+            const storageKey = `${empresa.id}_conversas`;
+            let todasConversas = JSON.parse(localStorage.getItem(storageKey) || '[]');
+            adicionarLog(`📋 Total de conversas registradas no sistema: ${todasConversas.length}`, 'info');
+            
+            // 4. Verifica se o usuário atual está participando de alguma conversa
+            const conversasUsuario = todasConversas.filter(conv => 
+                conv.participantes && conv.participantes.includes(usuarioAtual.id)
+            );
+            
+            if (conversasUsuario.length === 0) {
+                adicionarLog(`⚠️ Atenção: O usuário ${usuarioAtual.nome} (ID: ${usuarioAtual.id}) NÃO está participando de nenhuma conversa listada!`, 'warning');
+                adicionarLog(`💡 Para resolver, o administrador precisa adicionar este usuário aos grupos/chats manualmente, utilizando o ID: ${usuarioAtual.id}`, 'info');
+            } else {
+                adicionarLog(`✅ Usuário ${usuarioAtual.nome} participa de ${conversasUsuario.length} conversa(s):`, 'success');
+                conversasUsuario.forEach(conv => {
+                    adicionarLog(`   - ${conv.nome} (${conv.tipo})`, 'success');
+                });
+            }
+            
+            // 5. Tenta forçar a reinicialização do sistema de mensagens
+            // Isso pode ajudar a recarregar o estado e as conversas ativas.
+            if (typeof window.inicializarMensagens === 'function') {
+                window.inicializarMensagens();
+                adicionarLog('✅ Sistema de mensagens foi reinicializado/recarregado', 'success');
+            } else {
+                adicionarLog('⚠️ Função `inicializarMensagens` não encontrada. O sistema de mensagens pode não estar carregado corretamente.', 'warning');
+            }
+            
+            // 6. Tenta forçar a sincronização específica do usuário atual
+            await forcarSincronizacaoUsuarioAtual();
+            
+            adicionarLog('🎉 CORREÇÃO COMPLETA EXECUTADA!', 'success');
+            adicionarLog('💡 Se o problema de visualização persistir, verifique se o usuário foi corretamente adicionado pelo administrador. O ID do usuário é crucial para a adição.', 'info');
+        }
+        
+        /**
+         * Função placeholder para selecionar um usuário na lista.
+         * Pode ser expandida para mostrar mais detalhes ou realizar ações específicas.
+         * @param {string} userId - O ID do usuário selecionado.
+         */
+        function selecionarUsuario(userId) {
+            adicionarLog(`👤 Usuário selecionado na lista: ${userId}`, 'info');
+            // Aqui você pode adicionar lógica para destacar o usuário, mostrar detalhes, etc.
+            // Por exemplo, para marcar visualmente:
+            document.querySelectorAll('.user-item').forEach(item => item.classList.remove('selected'));
+            const selectedItem = document.querySelector(`.user-item[onclick*="'${userId}'"]`);
+            if (selectedItem) {
+                selectedItem.classList.add('selected');
+            }
+        }
+        
+        /**
+         * Recarrega todos os dados exibidos na interface: usuários, conversas e informações do usuário atual.
+         */
+        async function carregarDados() {
+            adicionarLog('🔄 Recarregando todos os dados da interface...', 'info');
+            carregarListaUsuarios();
+            carregarListaConversas();
+            await verificarConversasUsuarioAtual(); // Await para garantir que as informações do usuário sejam carregadas primeiro
+            adicionarLog('✅ Dados da interface recarregados com sucesso', 'success');
+        }
+        
+        // --- Inicialização da página ---
+document.addEventListener('DOMContentLoaded', async () => {
+    adicionarLog('📱 Ferramenta de correção de sincronização de mensagens inicializada', 'info');
+            
+            // Verifica se a empresa está logada, se não, redireciona para o login
+            if (!getEmpresaLogada()) {
+                adicionarLog('❌ Nenhuma empresa logada detectada. Redirecionando para a página de login em 2 segundos...', 'error');
+                setTimeout(() => {
+                    window.location.href = 'login.html'; // Certifique-se que o caminho para login.html está correto
+                }, 2000);
+                return; // Impede a continuação da execução
+            }
+            
+            // Carrega todos os dados iniciais da interface
+            await carregarDados();
+            
+            // Verifica se o script principal de mensagens (mensagens-instantaneas.js) está carregado
+            // Isso é importante pois as funções podem depender dele.
+            setTimeout(() => {
+                if (typeof window.carregarConversasNoModal === 'function') {
+                    adicionarLog('✅ Sistema de mensagens principal (mensagens-instantaneas.js) detectado e funcional', 'success');
+                } else {
+                    adicionarLog('⚠️ Aviso: O script principal de mensagens (ex: mensagens-instantaneas.js) não foi detectado. Algumas funcionalidades podem não operar corretamente.', 'warning');
+                }
+            }, 1500); // Pequeno delay para dar tempo ao sistema carregar
+        });
+
+        // --- Configuração do Botão Fixo ---
+        // Tenta encontrar e configurar o botão de sincronização fixo
+        setTimeout(() => {
+            const btnSync = document.getElementById('btnSyncMensagens');
+            if (btnSync) {
+                btnSync.style.display = 'flex'; // Torna o botão visível
+                btnSync.onclick = () => {
+                    adicionarLog('🔔 Botão "Sincronizar" fixo clicado.', 'info');
+                    // Executa a sincronização específica do usuário atual
+                    forcarSincronizacaoUsuarioAtual(); 
+                    // Tenta recarregar a lista de conversas na interface principal
+                    if (typeof window.carregarConversasNoModal === 'function') {
+                        window.carregarConversasNoModal();
+                    }
+                };
+            }
+        }, 1000); // Aguarda um pouco para garantir que o botão exista no DOM
+    
+        // --- Exporta funções globais ---
+        // Torna as funções principais acessíveis globalmente para que outros scripts possam chamá-las, se necessário.
+        window.showTab = showTab;
+        window.forcarSincronizacaoUsuarioAtual = forcarSincronizacaoUsuarioAtual;
+        window.verificarConversasUsuarioAtual = verificarConversasUsuarioAtual;
+        window.forcarSincronizacaoTodasConversas = forcarSincronizacaoTodasConversas;
+        window.limparCacheConversas = limparCacheConversas;
+        window.aplicarCorrecaoCompleta = aplicarCorrecaoCompleta;
+        window.carregarDados = carregarDados;
+        window.limparLogs = limparLogs;
+        window.selecionarUsuario = selecionarUsuario;
+    </script>
+</body>
+</html>

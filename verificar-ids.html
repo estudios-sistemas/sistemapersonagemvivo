@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Verificar IDs</title>
+    <style>
+        body { font-family: Arial; padding: 20px; background: #f5f5f5; }
+        .result { background: white; padding: 15px; margin: 10px 0; border-radius: 8px; border-left: 4px solid #667eea; }
+        .success { border-left-color: #4CAF50; background: #f1f8f4; }
+        .error { border-left-color: #dc3545; background: #fdf8f8; }
+        code { background: #f0f0f0; padding: 2px 6px; border-radius: 3px; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Verificador de IDs de Cadastros</h1>
+    <p>Verificando os campos de ID na página index.html...</p>
+    
+    <iframe id="testFrame" src="index.html" style="display:none;"></iframe>
+    
+    <script>
+        function verificarIDs() {
+            const frame = document.getElementById('testFrame');
+            
+            // Esperar o frame carregar
+            setTimeout(() => {
+                try {
+                    const doc = frame.contentDocument;
+                    if (!doc) {
+                        mostrarResultado('Não consegui acessar o iframe', false);
+                        return;
+                    }
+                    
+                    const campos = [
+                        'ID_clientes',
+                        'ID_casa_de_festas', 
+                        'ID_elenco',
+                        'ID_personagens',
+                        'ID_motoristas',
+                        'ID_fornecedores',
+                        'ID_funcionarios',
+                        'ID_usuario_sistema',
+                        'ID_usuario'
+                    ];
+                    
+                    let resultados = '<h2>Resultados:</h2>';
+                    
+                    campos.forEach(campoId => {
+                        const campo = doc.getElementById(campoId);
+                        if (campo) {
+                            const valor = campo.value || campo.textContent || '';
+                            const classe = valor ? 'success' : 'error';
+                            const status = valor ? '✅' : '❌';
+                            resultados += `
+                                <div class="result ${classe}">
+                                    <strong>${status} ${campoId}</strong><br>
+                                    Valor: <code>${valor || '(vazio)'}</code>
+                                </div>
+                            `;
+                        }
+                    });
+                    
+                    document.body.innerHTML += resultados;
+                    
+                } catch (e) {
+                    mostrarResultado('Erro: ' + e.message, false);
+                }
+            }, 3000);
+        }
+        
+        function mostrarResultado(msg, sucesso) {
+            const classe = sucesso ? 'success' : 'error';
+            document.body.innerHTML += `<div class="result ${classe}">${msg}</div>`;
+        }
+        
+        verificarIDs();
+    </script>
+</body>
+</html>

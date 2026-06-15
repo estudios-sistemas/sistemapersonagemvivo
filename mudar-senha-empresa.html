@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Primeiro Acesso - Alterar Senha</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            width: 100%;
+            max-width: 480px;
+        }
+        h1 { text-align: center; margin-bottom: 0.5rem; color: #333; }
+        .subtitle { text-align: center; color: #666; margin-bottom: 1.5rem; font-size: 0.9rem; }
+        .form-group { margin-bottom: 1.2rem; }
+        .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 600; color: #333; }
+        .form-group input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            font-size: 1rem;
+        }
+        .form-group input:focus { outline: none; border-color: #667eea; }
+        .form-group input:disabled { background-color: #f5f5f5; color: #666; }
+        button {
+            width: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+        button:hover { transform: translateY(-2px); }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        .error { color: #dc3545; text-align: center; margin-top: 1rem; background: #f8d7da; padding: 10px; border-radius: 12px; display: none; }
+        .success { color: #155724; text-align: center; margin-top: 1rem; background: #d4edda; padding: 10px; border-radius: 12px; display: none; }
+        .info-empresa {
+            background: linear-gradient(135deg, #e8f4fd, #d1ecf1);
+            padding: 1rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+        .password-strength { margin-top: 8px; height: 4px; background: #e9ecef; border-radius: 4px; overflow: hidden; }
+        .strength-bar { height: 100%; width: 0%; transition: width 0.3s; }
+        .strength-text { font-size: 12px; margin-top: 5px; }
+        .requirements {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-size: 12px;
+        }
+        .requirements ul { margin-left: 20px; margin-top: 5px; }
+        .requirements li { list-style: none; margin: 5px 0; }
+        .requirements li.valid { color: #28a745; }
+        .requirements li.valid::before { content: "✓ "; }
+        .requirements li.invalid { color: #dc3545; }
+        .requirements li.invalid::before { content: "✗ "; }
+        .pasta-info {
+            background: #e8f4fd;
+            padding: 8px 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 12px;
+            text-align: center;
+            color: #0056b3;
+        }
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            display: none;
+        }
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .warning-box {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 12px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #856404;
+        }
+    </style>
+</head>
+<body>
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+    </div>
+
+    <div class="container">
+        <h1>🔑 Primeiro Acesso</h1>
+        <div class="subtitle">Cadastre uma nova senha para continuar</div>
+        
+        <div id="pastaDisplay" class="pasta-info"></div>
+        <div id="infoEmpresa" class="info-empresa"></div>
+        
+        <div class="warning-box">
+            ⚠️ Após alterar sua senha, você será redirecionado para o login.
+        </div>
+        
+        <div class="form-group">
+            <label>Login</label>
+            <input type="text" id="loginAtual" readonly disabled>
+        </div>
+        
+        <div class="form-group">
+            <label>Nova Senha *</label>
+            <input type="password" id="novaSenha" placeholder="Digite a nova senha" oninput="checkPasswordStrength()">
+            <div class="password-strength"><div class="strength-bar" id="strengthBar"></div></div>
+            <div class="strength-text" id="strengthText"></div>
+        </div>
+        
+        <div class="form-group">
+            <label>Confirmar Nova Senha *</label>
+            <input type="password" id="confirmarSenha" placeholder="Confirme a nova senha" oninput="checkPasswordMatch()">
+        </div>
+        
+        <div class="requirements">
+            <strong>Requisitos da senha:</strong>
+            <ul>
+                <li id="reqLength" class="invalid">Mínimo 6 caracteres</li>
+                <li id="reqCase" class="invalid">Letras maiúsculas e minúsculas</li>
+                <li id="reqNumber" class="invalid">Pelo menos um número</li>
+                <li id="reqSpecial" class="invalid">Pelo menos um caractere especial (!@#$%*)</li>
+            </ul>
+        </div>
+        
+        <button onclick="alterarSenha()" id="btnAlterar">ALTERAR SENHA</button>
+        <div id="msg" class="error"></div>
+        <div id="successMsg" class="success"></div>
+    </div>
+
+    <script>
+        let empresaLogada = null;
+        let pastaDaEmpresa = null;
+        
+        function carregarInfoEmpresa() {
+            console.log('🔍 Carregando dados da empresa...');
+            
+            // Tentar parâmetros da URL
+            const p = new URLSearchParams(window.location.search);
+            const loginUrl = p.get('login');
+            const pastaUrl = p.get('pasta');
+            const token = p.get('token');
+            const empresaId = p.get('id');
+            const nomeUrl = p.get('nome');
+
+            console.log('📋 Parâmetros recebidos:', { loginUrl, pastaUrl, token, empresaId, nomeUrl });
+
+            if (loginUrl && token === 'primeiro_acesso') {
+                empresaLogada = {
+                    id: empresaId,
+                    nome: decodeURIComponent(nomeUrl || loginUrl),
+                    login: loginUrl,
+                    senha_provisoria: true,
+                    pasta: pastaUrl || 'EMPRESA 1'
+                };
+                pastaDaEmpresa = empresaLogada.pasta;
+                console.log('✅ Empresa carregada dos parâmetros:', empresaLogada);
+            }
+
+            if (!empresaLogada) {
+                console.error('❌ Nenhum dado da empresa encontrado');
+                document.getElementById('msg').textContent = 'Dados não encontrados. Faça login novamente.';
+                document.getElementById('msg').style.display = 'block';
+                document.getElementById('btnAlterar').disabled = true;
+                setTimeout(() => {
+                    const urlDestino = `./${pastaDaEmpresa || 'EMPRESA 1'}/index.html`;
+                    console.log(`🔀 Redirecionando para: ${urlDestino}`);
+                    window.location.href = urlDestino;
+                }, 2000);
+                return;
+            }
+
+            pastaDaEmpresa = empresaLogada.pasta;
+
+            document.getElementById('pastaDisplay').innerHTML = `📁 Empresa: <strong>${pastaDaEmpresa}</strong>`;
+            document.getElementById('infoEmpresa').innerHTML = `
+                <strong>🏢 ${empresaLogada.nome}</strong><br>
+                Login: ${empresaLogada.login}<br>
+                <span style="color: #ff9800;">⚠️ Cadastre uma nova senha.</span>
+            `;
+            document.getElementById('loginAtual').value = empresaLogada.login;
+        }
+        
+        function checkPasswordStrength() {
+            const senha = document.getElementById('novaSenha').value;
+            const hasMinLength = senha.length >= 6;
+            const hasUpperCase = /[A-Z]/.test(senha);
+            const hasLowerCase = /[a-z]/.test(senha);
+            const hasNumber = /[0-9]/.test(senha);
+            const hasSpecial = /[!@#$%*]/.test(senha);
+            
+            document.getElementById('reqLength').className = hasMinLength ? 'valid' : 'invalid';
+            document.getElementById('reqCase').className = (hasUpperCase && hasLowerCase) ? 'valid' : 'invalid';
+            document.getElementById('reqNumber').className = hasNumber ? 'valid' : 'invalid';
+            document.getElementById('reqSpecial').className = hasSpecial ? 'valid' : 'invalid';
+            
+            let strength = 0;
+            if (hasMinLength) strength += 25;
+            if (hasUpperCase && hasLowerCase) strength += 25;
+            if (hasNumber) strength += 25;
+            if (hasSpecial) strength += 25;
+            
+            const bar = document.getElementById('strengthBar');
+            const text = document.getElementById('strengthText');
+            bar.style.width = strength + '%';
+            
+            if (strength <= 25) { bar.style.background = '#dc3545'; text.textContent = 'Senha fraca'; }
+            else if (strength <= 50) { bar.style.background = '#ffc107'; text.textContent = 'Senha média'; }
+            else if (strength <= 75) { bar.style.background = '#17a2b8'; text.textContent = 'Senha boa'; }
+            else { bar.style.background = '#28a745'; text.textContent = 'Senha forte!'; }
+            
+            checkPasswordMatch();
+        }
+        
+        function checkPasswordMatch() {
+            const senha = document.getElementById('novaSenha').value;
+            const confirmar = document.getElementById('confirmarSenha').value;
+            const confirmField = document.getElementById('confirmarSenha');
+            if (confirmar && senha !== confirmar) {
+                confirmField.style.borderColor = '#dc3545';
+            } else if (confirmar && senha === confirmar) {
+                confirmField.style.borderColor = '#28a745';
+            } else {
+                confirmField.style.borderColor = '#e9ecef';
+            }
+        }
+        
+        function validatePassword(senha) {
+            return senha.length >= 6 && /[A-Z]/.test(senha) && /[a-z]/.test(senha) && 
+                   /[0-9]/.test(senha) && /[!@#$%*]/.test(senha);
+        }
+        
+        function alterarSenha() {
+            const novaSenha = document.getElementById('novaSenha').value;
+            const confirmarSenha = document.getElementById('confirmarSenha').value;
+            const msgEl = document.getElementById('msg');
+            const successEl = document.getElementById('successMsg');
+            const btn = document.getElementById('btnAlterar');
+            const loading = document.getElementById('loadingOverlay');
+            
+            msgEl.style.display = 'none';
+            successEl.style.display = 'none';
+            
+            if (!novaSenha || !confirmarSenha) {
+                msgEl.textContent = 'Preencha todos os campos!';
+                msgEl.style.display = 'block';
+                return;
+            }
+            
+            if (novaSenha !== confirmarSenha) {
+                msgEl.textContent = 'As senhas não coincidem!';
+                msgEl.style.display = 'block';
+                return;
+            }
+            
+            if (!validatePassword(novaSenha)) {
+                msgEl.textContent = 'A senha não atende aos requisitos! Use letras maiúsculas, minúsculas, números e caracteres especiais.';
+                msgEl.style.display = 'block';
+                return;
+            }
+            
+            if (!empresaLogada) {
+                msgEl.textContent = 'Dados da empresa não carregados.';
+                msgEl.style.display = 'block';
+                return;
+            }
+            
+            btn.disabled = true;
+            btn.textContent = 'PROCESSANDO...';
+            loading.style.display = 'flex';
+            
+            // Salvar a nova senha
+            setTimeout(() => {
+                try {
+                    // Criar objeto com os dados atualizados
+                    const dadosEmpresaAtualizada = {
+                        id: empresaLogada.id,
+                        nome: empresaLogada.nome,
+                        login: empresaLogada.login,
+                        senha: novaSenha,
+                        senha_provisoria: false,
+                        pasta: empresaLogada.pasta
+                    };
+                    
+                    console.log('💾 Salvando no sessionStorage:', dadosEmpresaAtualizada);
+                    
+                    // Salvar no sessionStorage
+                    sessionStorage.setItem('empresa_logada', JSON.stringify(dadosEmpresaAtualizada));
+                    sessionStorage.setItem('pasta_atual', empresaLogada.pasta);
+                    
+                    // VERIFICAR SE SALVOU CORRETAMENTE
+                    const testEmpresa = sessionStorage.getItem('empresa_logada');
+                    const testPasta = sessionStorage.getItem('pasta_atual');
+                    
+                    console.log('🔍 VERIFICAÇÃO SESSIONSTORAGE:');
+                    console.log('   empresa_logada:', testEmpresa);
+                    console.log('   pasta_atual:', testPasta);
+                    
+                    if (testEmpresa && testPasta) {
+                        console.log('✅ SessionStorage salvo com sucesso!');
+                        
+                        // Mostrar mensagem de sucesso
+                        successEl.textContent = '✅ Senha alterada com sucesso! Redirecionando...';
+                        successEl.style.display = 'block';
+                        
+                        // Redirecionar para o index.html da pasta correta
+                        setTimeout(() => {
+                            const urlDestino = `./${empresaLogada.pasta}/index.html`;
+                            console.log(`🔀 Redirecionando para: ${urlDestino}`);
+                            window.location.href = urlDestino;
+                        }, 1500);
+                    } else {
+                        console.error('❌ Falha ao salvar sessionStorage');
+                        msgEl.textContent = 'Erro ao salvar a senha. Tente novamente.';
+                        msgEl.style.display = 'block';
+                        btn.disabled = false;
+                        btn.textContent = 'ALTERAR SENHA';
+                        loading.style.display = 'none';
+                    }
+                    
+                } catch(e) {
+                    console.error('❌ Erro ao salvar sessionStorage:', e);
+                    msgEl.textContent = 'Erro ao salvar: ' + e.message;
+                    msgEl.style.display = 'block';
+                    btn.disabled = false;
+                    btn.textContent = 'ALTERAR SENHA';
+                    loading.style.display = 'none';
+                }
+            }, 1000);
+        }
+        
+        // Inicializar ao carregar a página
+        document.addEventListener('DOMContentLoaded', carregarInfoEmpresa);
+    </script>
+</body>
+</html>
